@@ -533,6 +533,9 @@ async def start_scan(target_id: str):
     updated_target.pop("_id", None)
     return Target(**updated_target)
 
+# Include subdomain routes
+api_router.include_router(subdomain_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
