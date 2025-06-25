@@ -20,6 +20,7 @@ async def root():
 # Include routers
 api_router.include_router(tool_router)
 api_router.include_router(scan_router)
+api_router.include_router(target_router)
 
 # Include the router in the main app
 app.include_router(api_router)
