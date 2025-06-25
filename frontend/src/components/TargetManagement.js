@@ -160,6 +160,22 @@ const TargetManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg">
+          <div className="flex items-center">
+            <i className="fas fa-exclamation-triangle mr-2"></i>
+            <span>{error}</span>
+            <button 
+              onClick={() => setError(null)}
+              className="ml-auto text-red-300 hover:text-white"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -181,7 +197,7 @@ const TargetManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">Total Targets</p>
-              <p className="text-xl font-bold text-white">{targets.length}</p>
+              <p className="text-xl font-bold text-white">{stats.total_targets}</p>
             </div>
             <i className="fas fa-bullseye text-xl text-cyan-400"></i>
           </div>
@@ -191,9 +207,7 @@ const TargetManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">Active Scans</p>
-              <p className="text-xl font-bold text-yellow-400">
-                {targets.filter(t => t.status === 'scanning').length}
-              </p>
+              <p className="text-xl font-bold text-yellow-400">{stats.active_scans}</p>
             </div>
             <i className="fas fa-spinner fa-spin text-xl text-yellow-400"></i>
           </div>
@@ -203,9 +217,7 @@ const TargetManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">Total Subdomains</p>
-              <p className="text-xl font-bold text-green-400">
-                {targets.reduce((sum, target) => sum + target.subdomains, 0)}
-              </p>
+              <p className="text-xl font-bold text-green-400">{stats.total_subdomains}</p>
             </div>
             <i className="fas fa-sitemap text-xl text-green-400"></i>
           </div>
@@ -215,9 +227,7 @@ const TargetManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">Total Vulnerabilities</p>
-              <p className="text-xl font-bold text-red-400">
-                {targets.reduce((sum, target) => sum + target.vulnerabilities, 0)}
-              </p>
+              <p className="text-xl font-bold text-red-400">{stats.total_vulnerabilities}</p>
             </div>
             <i className="fas fa-shield-alt text-xl text-red-400"></i>
           </div>
@@ -233,88 +243,111 @@ const TargetManagement = () => {
           </h2>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Target
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Subdomains
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Vulnerabilities
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Last Scan
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {targets.map((target) => (
-                <tr key={target.id} className="hover:bg-gray-700/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <i className={`fas ${target.type === 'domain' ? 'fa-globe' : 'fa-network-wired'} mr-3 text-cyan-400`}></i>
-                      <span className="text-white font-medium">{target.domain}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-gray-300 capitalize">{target.type}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(target.status)}`}>
-                      {target.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-white">
-                    {target.subdomains}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className="text-white mr-2">{target.vulnerabilities}</span>
-                      {target.severity !== 'none' && (
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getSeverityColor(target.severity)}`}>
-                          {target.severity}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-400 text-sm">
-                    {target.lastScan || 'Never'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => startScan(target.id)}
-                        disabled={target.status === 'scanning'}
-                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                      >
-                        {target.status === 'scanning' ? 'Scanning...' : 'Scan'}
-                      </button>
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                        View
-                      </button>
-                      <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="p-6 text-center">
+            <i className="fas fa-spinner fa-spin text-2xl text-cyan-400 mb-4"></i>
+            <p className="text-gray-400">Loading targets...</p>
+          </div>
+        ) : targets.length === 0 ? (
+          <div className="p-6 text-center">
+            <i className="fas fa-bullseye text-4xl text-gray-600 mb-4"></i>
+            <h3 className="text-lg font-semibold text-gray-400 mb-2">No Targets Found</h3>
+            <p className="text-gray-500 mb-4">Get started by adding your first reconnaissance target.</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              <i className="fas fa-plus mr-2"></i>
+              Add Target
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Target
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Subdomains
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Vulnerabilities
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Last Scan
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {targets.map((target) => (
+                  <tr key={target.id} className="hover:bg-gray-700/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <i className={`fas ${target.type === 'domain' ? 'fa-globe' : target.type === 'ip' ? 'fa-server' : 'fa-network-wired'} mr-3 text-cyan-400`}></i>
+                        <span className="text-white font-medium">{target.domain}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-300 capitalize">{target.type}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(target.status)}`}>
+                        {target.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-white">
+                      {target.subdomains}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="text-white mr-2">{target.vulnerabilities}</span>
+                        {target.severity !== 'none' && (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getSeverityColor(target.severity)}`}>
+                            {target.severity}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-400 text-sm">
+                      {formatDate(target.last_scan)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startScan(target.id)}
+                          disabled={target.status === 'scanning'}
+                          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          {target.status === 'scanning' ? 'Scanning...' : 'Scan'}
+                        </button>
+                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                          View
+                        </button>
+                        <button 
+                          onClick={() => deleteTarget(target.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add Target Modal */}
