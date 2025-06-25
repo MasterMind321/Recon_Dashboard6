@@ -155,11 +155,11 @@ backend:
 
   - task: "JavaScript/Endpoint Discovery Implementation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes/javascript_routes.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -170,6 +170,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Verified JavaScript/Endpoint Discovery implementation exists and is complete. Now preparing to test this implementation before moving to Vulnerability Scanning tools implementation."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing of all JavaScript/Endpoint Discovery API endpoints completed. All endpoints are working correctly. Successfully tested GET /api/javascript-tools/status to check all 6 tools (subjs, xnLinkFinder, linkfinder, getjswords, JSParser, jsbeautifier), POST /api/javascript-tools/install to initiate tool installation, GET /api/javascript-jobs/{job_id} to retrieve job details, GET /api/targets/{target_id}/javascript-jobs to get JavaScript analysis history, GET /api/targets/{target_id}/javascript-results to retrieve results, GET /api/targets/{target_id}/endpoints to get extracted endpoints, GET /api/targets/{target_id}/keywords to get discovered keywords, and GET /api/javascript/stats for overall statistics. The only issue was with POST /api/targets/{target_id}/analyze-javascript which correctly returns a 400 error when no live subdomains are available, as expected. Error handling works correctly for invalid target IDs and job IDs. The implementation properly requires live subdomains from a completed liveness check before starting JavaScript analysis."
 
   - task: "Vulnerability Scanning Implementation"
     implemented: false
