@@ -310,6 +310,8 @@ agent_communication:
     message: "Successfully completed major dashboard and backend restructuring. 1) Removed System Status from dashboard and replaced with Tool Categories overview. 2) Updated Workflow Monitor to show actual 58+ tools instead of dummy data. 3) Removed vulnerabilities and notifications pages from navigation. 4) Replaced all dummy data with real API integration. 5) Started backend restructuring with organized folder structure (models/, routes/, services/, data/). Backend and frontend are running successfully. Ready for testing."
   - agent: "testing"
     message: "Completed comprehensive testing of all backend API endpoints. All endpoints are working correctly. The API health check, tool management APIs, status check APIs, and scan results APIs are all functioning as expected. The backend is properly structured and responding with correct data formats. No issues found with any of the backend functionality."
+  - agent: "testing"
+    message: "Completed comprehensive testing of the Target Management API. All endpoints are working correctly with proper data persistence. Successfully tested creating targets of different types (domain, IP, CIDR), filtering by status and type, retrieving targets by ID, updating target fields, initiating scans, and deleting targets. The target statistics endpoint correctly reports counts by status, type, and severity. All error cases (duplicate domains, invalid IDs) are handled properly. The Target Management API is fully functional and ready for use."
 
 backend:
   - task: "API Health Check"
