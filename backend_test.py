@@ -1285,6 +1285,7 @@ class ReconAPITester:
         self.target_id = None  # Will store a target ID for target management tests
         self.enumeration_job_id = None  # Will store an enumeration job ID for tests
         self.liveness_job_id = None  # Will store a liveness job ID for tests
+        self.javascript_job_id = None  # Will store a JavaScript analysis job ID for tests
 
 def main():
     # Get the backend URL from the frontend .env file
