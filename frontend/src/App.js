@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-do
 import Dashboard from './components/Dashboard';
 import TargetManagement from './components/TargetManagement';
 import WorkflowMonitor from './components/WorkflowMonitor';
-import ScanResults from './components/ScanResults';
+import DomainResultsOverview from './components/DomainResultsOverview';
+import DomainDetailPage from './components/DomainDetailPage';
+import SubdomainDetailPage from './components/SubdomainDetailPage';
 import AdminPanel from './components/AdminPanel';
 import ToolsManagement from './components/ToolsManagement';
 
