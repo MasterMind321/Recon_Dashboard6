@@ -27,12 +27,11 @@ async def get_targets(
         if type:
             filter_query["type"] = type
             
-        targets = list(db.targets.find(filter_query))
+        targets = await db.targets.find(filter_query).to_list(1000)
         
         # Convert MongoDB documents to Target models
         result = []
         for target in targets:
-            target["_id"] = str(target["_id"]) if "_id" in target else None
             # Remove MongoDB _id from the response
             target.pop("_id", None)
             result.append(Target(**target))
