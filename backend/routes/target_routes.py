@@ -100,7 +100,7 @@ async def update_target(target_id: str, update_request: UpdateTargetRequest):
         db = get_database()
         
         # Find existing target
-        existing = db.targets.find_one({"id": target_id})
+        existing = await db.targets.find_one({"id": target_id})
         if not existing:
             raise HTTPException(status_code=404, detail="Target not found")
         
@@ -120,10 +120,10 @@ async def update_target(target_id: str, update_request: UpdateTargetRequest):
         update_data["updated_at"] = datetime.utcnow()
         
         # Update in database
-        db.targets.update_one({"id": target_id}, {"$set": update_data})
+        await db.targets.update_one({"id": target_id}, {"$set": update_data})
         
         # Fetch and return updated target
-        updated_target = db.targets.find_one({"id": target_id})
+        updated_target = await db.targets.find_one({"id": target_id})
         updated_target.pop("_id", None)
         return Target(**updated_target)
         
