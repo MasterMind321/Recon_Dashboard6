@@ -184,24 +184,19 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
+  version: "2.0"
   test_sequence: 1
   run_ui: false
 
 test_plan:
   current_focus:
-    - "API Health Check"
-    - "Get All Tools Endpoint"
-    - "Get Tools by Category Endpoint"
-    - "Tool Statistics Endpoint"
-    - "Tool Installation Endpoint"
-    - "Update Tool Endpoint"
+    - "Tools Management Page Frontend Testing"
+    - "Enhanced Scan Results Page Validation"
+    - "Overall UI Integration Testing"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "I've implemented all the backend API endpoints for the ReconFlow tool management system. Please test all the endpoints to ensure they're working correctly."
-  - agent: "testing"
-    message: "I've completed testing all the backend API endpoints for the ReconFlow tool management system. All endpoints are working correctly. The API successfully returns all 58 tools across 10 categories, with proper color coding and categorization. The tool statistics endpoint correctly reports installation status, tool status, and category counts. The update and installation endpoints work as expected. Error handling for invalid tool IDs and categories is also working properly."
+    message: "Successfully implemented comprehensive tool management system with 58 tools across 10 categories. Backend fully tested and working. Frontend components created but need testing. Tools organized by: 🟦 Subdomain Enumeration, 🟩 Liveness & Fingerprinting, 🟨 JavaScript/Endpoint Discovery, 🟥 Vulnerability Scanning, 🟪 Historical Data, 🟧 Directory Fuzzing, 🟫 Port Scanning, 🟦 Cloud Recon, 🟨 Reporting/Notification, ⚙️ Utility/Misc. Enhanced Scan Results page with better clarity and detailed information cards. Ready for frontend testing."
