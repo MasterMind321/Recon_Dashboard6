@@ -108,27 +108,6 @@ function App() {
               </NavLink>
               
               <NavLink 
-                to="/vulnerabilities" 
-                className={({ isActive }) => 
-                  `block p-3 rounded-lg transition-colors ${isActive ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`
-                }
-              >
-                <i className="fas fa-shield-alt mr-3"></i>
-                Vulnerabilities
-              </NavLink>
-              
-              <NavLink 
-                to="/notifications" 
-                className={({ isActive }) => 
-                  `block p-3 rounded-lg transition-colors relative ${isActive ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`
-                }
-              >
-                <i className="fas fa-bell mr-3"></i>
-                Notifications
-
-              </NavLink>
-              
-              <NavLink 
                 to="/admin" 
                 className={({ isActive }) => 
                   `block p-3 rounded-lg transition-colors ${isActive ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`
