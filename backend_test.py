@@ -982,6 +982,310 @@ class ReconAPITester:
                 
         return success, data
 
+    # Liveness, Fingerprinting & Screenshots API Tests
+    def test_get_liveness_tools_status(self):
+        """Test getting liveness tools status"""
+        success, data = self.run_test(
+            "Get Liveness Tools Status",
+            "GET",
+            "api/liveness-tools/status",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the response
+            if 'tools' in data and 'total_tools' in data and 'installed_tools' in data:
+                print("✅ Liveness tools status structure is correct")
+                
+                # Print tools status
+                print(f"Total tools: {data['total_tools']}")
+                print(f"Installed tools: {data['installed_tools']}")
+                
+                # Check specific tools
+                tools = data['tools']
+                for tool, installed in tools.items():
+                    print(f"Tool {tool}: {'Installed' if installed else 'Not installed'}")
+                    
+                # Verify all 8 tools are present
+                expected_tools = [
+                    "httpx", "cdncheck", "tlsx", "gowitness", 
+                    "wafw00f", "whatweb", "wappalyzer", "cmseek"
+                ]
+                
+                missing_tools = [tool for tool in expected_tools if tool not in tools]
+                if missing_tools:
+                    print(f"⚠️ Missing tools in status: {', '.join(missing_tools)}")
+                    success = False
+                else:
+                    print(f"✅ All 8 liveness tools are present in status")
+            else:
+                print("⚠️ Liveness tools status structure is incorrect")
+                success = False
+                
+        return success, data
+    
+    def test_install_liveness_tools(self):
+        """Test installing liveness tools"""
+        return self.run_test(
+            "Install Liveness Tools",
+            "POST",
+            "api/liveness-tools/install",
+            200
+        )
+    
+    def test_start_liveness_check(self, target_id=None, tools=None, include_screenshots=True):
+        """Test starting liveness check for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for liveness check test")
+                return False, {}
+            target_id = self.target_id
+            
+        data = {
+            "notes": "Test liveness check",
+            "include_screenshots": include_screenshots,
+            "include_tech_stack": True,
+            "include_tls_info": True
+        }
+        if tools:
+            data["tools"] = tools
+            
+        success, response = self.run_test(
+            f"Start Liveness Check for Target: {target_id}",
+            "POST",
+            f"api/targets/{target_id}/check-liveness",
+            200,
+            data=data
+        )
+        
+        if success and response:
+            self.liveness_job_id = response.get('id')
+            print(f"Created liveness job with ID: {self.liveness_job_id}")
+            
+            # Verify the job has the correct data
+            if response.get('target_id') != target_id:
+                print(f"⚠️ Liveness job has incorrect target_id: {response.get('target_id')} (expected {target_id})")
+                success = False
+                
+            if response.get('status') != 'pending':
+                print(f"⚠️ Liveness job has incorrect status: {response.get('status')} (expected 'pending')")
+                success = False
+                
+        return success, response
+    
+    def test_start_liveness_check_invalid_target(self):
+        """Test starting liveness check for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Start Liveness Check with Invalid Target ID: {invalid_id}",
+            "POST",
+            f"api/targets/{invalid_id}/check-liveness",
+            404,  # Expect 404 Not Found
+            data={"notes": "This should fail"}
+        )
+    
+    def test_get_liveness_job(self, job_id=None):
+        """Test getting a specific liveness job"""
+        if job_id is None:
+            if self.liveness_job_id is None:
+                print("⚠️ No liveness job ID available for get test")
+                return False, {}
+            job_id = self.liveness_job_id
+            
+        success, data = self.run_test(
+            f"Get Liveness Job: {job_id}",
+            "GET",
+            f"api/liveness-jobs/{job_id}",
+            200
+        )
+        
+        if success and data:
+            print(f"Retrieved liveness job for domain: {data.get('domain')} (status: {data.get('status')})")
+            
+            # Verify the job has all required fields
+            required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Liveness job missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Liveness job has all required fields")
+                
+        return success, data
+    
+    def test_get_liveness_job_invalid_id(self):
+        """Test getting a liveness job with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Liveness Job with Invalid ID: {invalid_id}",
+            "GET",
+            f"api/liveness-jobs/{invalid_id}",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_liveness_jobs(self, target_id=None):
+        """Test getting liveness jobs for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for liveness jobs test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get Liveness Jobs for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/liveness-jobs",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} liveness jobs for target")
+                
+                # Verify structure of liveness jobs
+                if len(data) > 0:
+                    first_job = data[0]
+                    required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+                    missing_fields = [field for field in required_fields if field not in first_job]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Liveness job missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Liveness job has all required fields")
+            else:
+                print(f"⚠️ Expected a list of liveness jobs, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_liveness_jobs_invalid_target(self):
+        """Test getting liveness jobs for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Liveness Jobs with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/liveness-jobs",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_liveness_results(self, target_id=None, alive_only=True, with_screenshots=False):
+        """Test getting liveness results for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for liveness results test")
+                return False, {}
+            target_id = self.target_id
+            
+        params = {
+            "alive_only": str(alive_only).lower(),
+            "with_screenshots": str(with_screenshots).lower()
+        }
+            
+        success, data = self.run_test(
+            f"Get Liveness Results for Target: {target_id}" + 
+            (" (alive only)" if alive_only else "") +
+            (" (with screenshots)" if with_screenshots else ""),
+            "GET",
+            f"api/targets/{target_id}/liveness-results",
+            200,
+            params=params
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} liveness results for target")
+                
+                # Verify structure of liveness results
+                if len(data) > 0:
+                    first_result = data[0]
+                    required_fields = ['subdomain', 'is_alive', 'checked_by', 'last_checked']
+                    missing_fields = [field for field in required_fields if field not in first_result]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Liveness result missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Liveness result has all required fields")
+                        
+                    # Check for screenshot data if requested
+                    if with_screenshots and 'screenshot_base64' not in first_result:
+                        print("⚠️ Screenshots were requested but not included in results")
+                        success = False
+                        
+                    # Print some subdomain examples
+                    for i, result in enumerate(data[:3]):
+                        print(f"  Subdomain {i+1}: {result.get('subdomain')}")
+                        print(f"    Alive: {result.get('is_alive')}")
+                        print(f"    Checked by: {', '.join(result.get('checked_by', []))}")
+                        if result.get('status_code'):
+                            print(f"    Status code: {result.get('status_code')}")
+            else:
+                print(f"⚠️ Expected a list of liveness results, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_liveness_results_invalid_target(self):
+        """Test getting liveness results for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Liveness Results with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/liveness-results",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_liveness_stats(self):
+        """Test getting overall liveness statistics"""
+        success, data = self.run_test(
+            "Get Liveness Statistics",
+            "GET",
+            "api/liveness/stats",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the stats response
+            required_fields = ['total_jobs', 'active_jobs', 'completed_jobs', 
+                              'failed_jobs', 'total_hosts_checked', 'total_alive_hosts',
+                              'by_status', 'by_tool_success_rate', 'avg_execution_time']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Liveness stats missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Liveness stats has all required fields")
+                print(f"Total jobs: {data['total_jobs']}")
+                print(f"Active jobs: {data['active_jobs']}")
+                print(f"Completed jobs: {data['completed_jobs']}")
+                print(f"Failed jobs: {data['failed_jobs']}")
+                print(f"Total hosts checked: {data['total_hosts_checked']}")
+                print(f"Total alive hosts: {data['total_alive_hosts']}")
+                print(f"By status: {json.dumps(data['by_status'], indent=2)}")
+                print(f"Tool success rates: {json.dumps(data['by_tool_success_rate'], indent=2)}")
+                print(f"Average execution time: {data['avg_execution_time']:.2f} seconds")
+                if data.get('most_reliable_tool'):
+                    print(f"Most reliable tool: {data['most_reliable_tool']}")
+                
+        return success, data
+
+    def __init__(self, base_url):
+        self.base_url = base_url
+        self.tests_run = 0
+        self.tests_passed = 0
+        self.tool_id = None  # Will store a tool ID for update/install tests
+        self.scan_result_id = None  # Will store a scan result ID for tests
+        self.target_id = None  # Will store a target ID for target management tests
+        self.enumeration_job_id = None  # Will store an enumeration job ID for tests
+        self.liveness_job_id = None  # Will store a liveness job ID for tests
+
 def main():
     # Get the backend URL from the frontend .env file
     backend_url = "https://63553471-39ba-4ecf-9884-a60920dcd608.preview.emergentagent.com"
@@ -1161,6 +1465,58 @@ def main():
     # 12. Test getting enumeration statistics
     print("\n--- Getting Enumeration Statistics ---")
     tester.test_get_enumeration_stats()
+    
+    # Test Liveness, Fingerprinting & Screenshots API
+    print("\n==== Liveness, Fingerprinting & Screenshots Endpoints ====")
+    
+    # 1. Test getting liveness tools status
+    print("\n--- Liveness Tools Status ---")
+    tester.test_get_liveness_tools_status()
+    
+    # 2. Test installing liveness tools
+    print("\n--- Installing Liveness Tools ---")
+    tester.test_install_liveness_tools()
+    
+    # 3. Test getting liveness tools status again (should show installation in progress)
+    print("\n--- Updated Liveness Tools Status ---")
+    tester.test_get_liveness_tools_status()
+    
+    # 4. Test starting liveness check
+    print("\n--- Starting Liveness Check ---")
+    if domain_target_id:
+        # Test with specific tools (httpx and wafw00f should be working)
+        tester.test_start_liveness_check(domain_target_id, ["httpx", "wafw00f"], include_screenshots=False)
+    
+    # 5. Test starting liveness check with invalid target
+    tester.test_start_liveness_check_invalid_target()
+    
+    # 6. Test getting liveness job
+    print("\n--- Getting Liveness Job ---")
+    if tester.liveness_job_id:
+        tester.test_get_liveness_job(tester.liveness_job_id)
+    
+    # 7. Test getting liveness job with invalid ID
+    tester.test_get_liveness_job_invalid_id()
+    
+    # 8. Test getting liveness jobs for target
+    print("\n--- Getting Liveness Jobs for Target ---")
+    if domain_target_id:
+        tester.test_get_target_liveness_jobs(domain_target_id)
+    
+    # 9. Test getting liveness jobs for invalid target
+    tester.test_get_target_liveness_jobs_invalid_target()
+    
+    # 10. Test getting liveness results for target
+    print("\n--- Getting Liveness Results for Target ---")
+    if domain_target_id:
+        tester.test_get_target_liveness_results(domain_target_id, alive_only=True, with_screenshots=False)
+    
+    # 11. Test getting liveness results for invalid target
+    tester.test_get_target_liveness_results_invalid_target()
+    
+    # 12. Test getting liveness statistics
+    print("\n--- Getting Liveness Statistics ---")
+    tester.test_get_liveness_stats()
     
     # 13. Test target stats again (should show our targets with updated subdomain counts)
     print("\n--- Updated Target Stats ---")
