@@ -704,6 +704,283 @@ class ReconAPITester:
             f"api/targets/{invalid_id}",
             404  # Expect 404 Not Found
         )
+        
+    # Subdomain Enumeration API Tests
+    def test_get_tools_status(self):
+        """Test getting subdomain enumeration tools status"""
+        success, data = self.run_test(
+            "Get Subdomain Enumeration Tools Status",
+            "GET",
+            "api/tools/status",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the response
+            if 'tools' in data and 'total_tools' in data and 'installed_tools' in data:
+                print("✅ Tools status structure is correct")
+                
+                # Print tools status
+                print(f"Total tools: {data['total_tools']}")
+                print(f"Installed tools: {data['installed_tools']}")
+                
+                # Check specific tools
+                tools = data['tools']
+                for tool, installed in tools.items():
+                    print(f"Tool {tool}: {'Installed' if installed else 'Not installed'}")
+                    
+                # Verify all 10 tools are present
+                expected_tools = [
+                    "subfinder", "amass", "crtsh", "puredns", "dnsx", 
+                    "gotator", "dnsgen", "github-subdomains", "mapcidr", "asnlookup"
+                ]
+                
+                missing_tools = [tool for tool in expected_tools if tool not in tools]
+                if missing_tools:
+                    print(f"⚠️ Missing tools in status: {', '.join(missing_tools)}")
+                    success = False
+                else:
+                    print(f"✅ All 10 subdomain enumeration tools are present in status")
+            else:
+                print("⚠️ Tools status structure is incorrect")
+                success = False
+                
+        return success, data
+    
+    def test_install_tools(self):
+        """Test installing subdomain enumeration tools"""
+        return self.run_test(
+            "Install Subdomain Enumeration Tools",
+            "POST",
+            "api/tools/install",
+            200
+        )
+    
+    def test_start_subdomain_enumeration(self, target_id=None, tools=None):
+        """Test starting subdomain enumeration for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for subdomain enumeration test")
+                return False, {}
+            target_id = self.target_id
+            
+        data = {"notes": "Test subdomain enumeration"}
+        if tools:
+            data["tools"] = tools
+            
+        success, response = self.run_test(
+            f"Start Subdomain Enumeration for Target: {target_id}",
+            "POST",
+            f"api/targets/{target_id}/enumerate-subdomains",
+            200,
+            data=data
+        )
+        
+        if success and response:
+            self.enumeration_job_id = response.get('id')
+            print(f"Created enumeration job with ID: {self.enumeration_job_id}")
+            
+            # Verify the job has the correct data
+            if response.get('target_id') != target_id:
+                print(f"⚠️ Enumeration job has incorrect target_id: {response.get('target_id')} (expected {target_id})")
+                success = False
+                
+            if response.get('status') != 'pending':
+                print(f"⚠️ Enumeration job has incorrect status: {response.get('status')} (expected 'pending')")
+                success = False
+                
+        return success, response
+    
+    def test_start_subdomain_enumeration_invalid_target(self):
+        """Test starting subdomain enumeration for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Start Subdomain Enumeration with Invalid Target ID: {invalid_id}",
+            "POST",
+            f"api/targets/{invalid_id}/enumerate-subdomains",
+            404,  # Expect 404 Not Found
+            data={"notes": "This should fail"}
+        )
+    
+    def test_get_enumeration_job(self, job_id=None):
+        """Test getting a specific enumeration job"""
+        if job_id is None:
+            if self.enumeration_job_id is None:
+                print("⚠️ No enumeration job ID available for get test")
+                return False, {}
+            job_id = self.enumeration_job_id
+            
+        success, data = self.run_test(
+            f"Get Enumeration Job: {job_id}",
+            "GET",
+            f"api/enumeration-jobs/{job_id}",
+            200
+        )
+        
+        if success and data:
+            print(f"Retrieved enumeration job for domain: {data.get('domain')} (status: {data.get('status')})")
+            
+            # Verify the job has all required fields
+            required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Enumeration job missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Enumeration job has all required fields")
+                
+        return success, data
+    
+    def test_get_enumeration_job_invalid_id(self):
+        """Test getting an enumeration job with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Enumeration Job with Invalid ID: {invalid_id}",
+            "GET",
+            f"api/enumeration-jobs/{invalid_id}",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_enumeration_jobs(self, target_id=None):
+        """Test getting enumeration jobs for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for enumeration jobs test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get Enumeration Jobs for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/enumeration-jobs",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} enumeration jobs for target")
+                
+                # Verify structure of enumeration jobs
+                if len(data) > 0:
+                    first_job = data[0]
+                    required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+                    missing_fields = [field for field in required_fields if field not in first_job]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Enumeration job missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Enumeration job has all required fields")
+            else:
+                print(f"⚠️ Expected a list of enumeration jobs, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_enumeration_jobs_invalid_target(self):
+        """Test getting enumeration jobs for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Enumeration Jobs with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/enumeration-jobs",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_subdomains(self, target_id=None, alive_only=False):
+        """Test getting subdomains for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for subdomains test")
+                return False, {}
+            target_id = self.target_id
+            
+        params = {}
+        if alive_only:
+            params["alive_only"] = "true"
+            
+        success, data = self.run_test(
+            f"Get Subdomains for Target: {target_id}" + (" (alive only)" if alive_only else ""),
+            "GET",
+            f"api/targets/{target_id}/subdomains",
+            200,
+            params=params
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} subdomains for target")
+                
+                # Verify structure of subdomains
+                if len(data) > 0:
+                    first_subdomain = data[0]
+                    required_fields = ['subdomain', 'discovered_by', 'first_seen', 'last_seen']
+                    missing_fields = [field for field in required_fields if field not in first_subdomain]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Subdomain result missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Subdomain result has all required fields")
+                        
+                    # Print some subdomain examples
+                    for i, subdomain in enumerate(data[:5]):
+                        print(f"  Subdomain {i+1}: {subdomain.get('subdomain')}")
+                        print(f"    Discovered by: {', '.join(subdomain.get('discovered_by', []))}")
+            else:
+                print(f"⚠️ Expected a list of subdomains, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_subdomains_invalid_target(self):
+        """Test getting subdomains for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Subdomains with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/subdomains",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_enumeration_stats(self):
+        """Test getting overall enumeration statistics"""
+        success, data = self.run_test(
+            "Get Enumeration Statistics",
+            "GET",
+            "api/subdomains/stats",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the stats response
+            required_fields = ['total_jobs', 'active_jobs', 'completed_jobs', 
+                              'failed_jobs', 'total_subdomains_discovered', 
+                              'by_status', 'by_tool_success_rate', 'avg_execution_time']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Enumeration stats missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Enumeration stats has all required fields")
+                print(f"Total jobs: {data['total_jobs']}")
+                print(f"Active jobs: {data['active_jobs']}")
+                print(f"Completed jobs: {data['completed_jobs']}")
+                print(f"Failed jobs: {data['failed_jobs']}")
+                print(f"Total subdomains discovered: {data['total_subdomains_discovered']}")
+                print(f"By status: {json.dumps(data['by_status'], indent=2)}")
+                print(f"Tool success rates: {json.dumps(data['by_tool_success_rate'], indent=2)}")
+                print(f"Average execution time: {data['avg_execution_time']:.2f} seconds")
+                if data.get('most_productive_tool'):
+                    print(f"Most productive tool: {data['most_productive_tool']}")
+                
+        return success, data
 
 def main():
     # Get the backend URL from the frontend .env file
