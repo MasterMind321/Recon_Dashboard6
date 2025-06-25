@@ -78,7 +78,7 @@ async def get_target(target_id: str):
     """Get a specific target by ID"""
     try:
         db = get_database()
-        target = db.targets.find_one({"id": target_id})
+        target = await db.targets.find_one({"id": target_id})
         
         if not target:
             raise HTTPException(status_code=404, detail="Target not found")
