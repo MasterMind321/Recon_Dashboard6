@@ -5,9 +5,7 @@ import Dashboard from './components/Dashboard';
 import TargetManagement from './components/TargetManagement';
 import WorkflowMonitor from './components/WorkflowMonitor';
 import ScanResults from './components/ScanResults';
-import VulnerabilityResults from './components/VulnerabilityResults';
 import AdminPanel from './components/AdminPanel';
-import NotificationCenter from './components/NotificationCenter';
 import ToolsManagement from './components/ToolsManagement';
 
 function App() {
