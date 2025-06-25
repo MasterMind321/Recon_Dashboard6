@@ -362,8 +362,8 @@ class HierarchicalAPITester:
         return success, data
 
 def main():
-    # Get the backend URL from the frontend .env file
-    backend_url = "https://f1fea40a-624c-44a3-a4aa-3eb86fa11569.preview.emergentagent.com"
+    # Use the local backend URL
+    backend_url = "http://localhost:8001"
     
     print(f"Testing Hierarchical Domain Results APIs at: {backend_url}")
     
