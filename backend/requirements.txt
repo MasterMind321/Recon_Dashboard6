@@ -26,5 +26,4 @@ typer>=0.9.0
 aiohttp>=3.9.0
 dnsgen>=1.0.4
 wafw00f>=2.2.0
-linkfinder>=1.3.0
 jsbeautifier>=1.14.0
