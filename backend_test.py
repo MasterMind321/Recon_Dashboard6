@@ -770,6 +770,86 @@ def main():
     else:
         print("⚠️ Skipping scan results tests due to missing tool data")
     
+    # Test Target Management API
+    print("\n==== Target Management Endpoints ====")
+    
+    # 1. First test target stats (should be empty initially)
+    print("\n--- Initial Target Stats ---")
+    tester.test_get_target_stats()
+    
+    # 2. Test getting all targets (should be empty initially)
+    print("\n--- Initial Targets List ---")
+    tester.test_get_targets()
+    
+    # 3. Create multiple targets with different types
+    print("\n--- Creating Test Targets ---")
+    domain_target_success, domain_data = tester.test_create_target(f"domain-{uuid.uuid4().hex[:8]}.example.com", "domain")
+    ip_target_success, ip_data = tester.test_create_target(f"10.0.0.{random.randint(1, 254)}", "ip")
+    cidr_target_success, cidr_data = tester.test_create_target(f"192.168.{random.randint(1, 254)}.0/24", "cidr")
+    
+    # Store target IDs for later cleanup
+    domain_target_id = domain_data.get('id') if domain_target_success and domain_data else None
+    ip_target_id = ip_data.get('id') if ip_target_success and ip_data else None
+    cidr_target_id = cidr_data.get('id') if cidr_target_success and cidr_data else None
+    
+    # 4. Test duplicate target creation (should fail)
+    if domain_target_success and domain_data:
+        tester.test_create_duplicate_target(domain_data.get('domain'), domain_data.get('type'))
+    
+    # 5. Test getting targets again (should have our new targets)
+    print("\n--- Updated Targets List ---")
+    tester.test_get_targets()
+    
+    # 6. Test filtering targets by type
+    print("\n--- Filtering Targets ---")
+    tester.test_get_targets_with_filters(target_type="domain")
+    tester.test_get_targets_with_filters(target_type="ip")
+    tester.test_get_targets_with_filters(target_type="cidr")
+    
+    # 7. Test getting target by ID
+    print("\n--- Getting Target by ID ---")
+    if domain_target_id:
+        tester.test_get_target_by_id(domain_target_id)
+    
+    # 8. Test getting target with invalid ID
+    tester.test_get_target_invalid_id()
+    
+    # 9. Test updating target
+    print("\n--- Updating Target ---")
+    if domain_target_id:
+        tester.test_update_target(domain_target_id)
+    
+    # 10. Test updating target with invalid ID
+    tester.test_update_target_invalid_id()
+    
+    # 11. Test starting scan
+    print("\n--- Starting Scan ---")
+    if domain_target_id:
+        tester.test_start_scan(domain_target_id)
+    
+    # 12. Test starting scan with invalid ID
+    tester.test_start_scan_invalid_id()
+    
+    # 13. Test target stats again (should show our targets)
+    print("\n--- Updated Target Stats ---")
+    tester.test_get_target_stats()
+    
+    # 14. Test deleting targets
+    print("\n--- Deleting Targets ---")
+    if domain_target_id:
+        tester.test_delete_target(domain_target_id)
+    if ip_target_id:
+        tester.test_delete_target(ip_target_id)
+    if cidr_target_id:
+        tester.test_delete_target(cidr_target_id)
+    
+    # 15. Test deleting target with invalid ID
+    tester.test_delete_target_invalid_id()
+    
+    # 16. Test target stats one more time (should be back to empty)
+    print("\n--- Final Target Stats ---")
+    tester.test_get_target_stats()
+    
     # Test error conditions
     print("\n==== Error Conditions ====")
     tester.test_invalid_tool_id()
