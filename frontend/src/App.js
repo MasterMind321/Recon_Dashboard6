@@ -139,7 +139,9 @@ function App() {
               <Route path="/targets" element={<TargetManagement />} />
               <Route path="/tools" element={<ToolsManagement />} />
               <Route path="/workflow" element={<WorkflowMonitor />} />
-              <Route path="/results" element={<ScanResults />} />
+              <Route path="/scan-results" element={<DomainResultsOverview />} />
+              <Route path="/scan-results/domain/:domainId" element={<DomainDetailPage />} />
+              <Route path="/scan-results/domain/:domainId/subdomain/:subdomain" element={<SubdomainDetailPage />} />
               <Route path="/admin" element={<AdminPanel />} />
             </Routes>
           </main>
