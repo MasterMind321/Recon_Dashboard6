@@ -160,7 +160,7 @@ function App() {
               <Route path="/workflow" element={<WorkflowMonitor />} />
               <Route path="/results" element={<ScanResults />} />
               <Route path="/vulnerabilities" element={<VulnerabilityResults />} />
-              <Route path="/notifications" element={<NotificationCenter notifications={notifications} />} />
+              <Route path="/notifications" element={<NotificationCenter />} />
               <Route path="/admin" element={<AdminPanel />} />
             </Routes>
           </main>
