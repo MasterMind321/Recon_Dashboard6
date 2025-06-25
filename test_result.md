@@ -107,15 +107,18 @@ user_problem_statement: "Remove System Status from dashboard, update Workflow Mo
 backend:
   - task: "Target Management API Implementation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented comprehensive target management system with full CRUD operations. Added Target model with proper fields (id, domain, type, status, subdomains, vulnerabilities, etc.) and all API routes: GET /api/targets, POST /api/targets, GET /api/targets/{id}, PUT /api/targets/{id}, DELETE /api/targets/{id}, POST /api/targets/{id}/scan, GET /api/targets/stats. All routes are async and properly integrated with MongoDB."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing of all Target Management API endpoints completed. All endpoints are working correctly. Created test targets of different types (domain, IP, CIDR), verified filtering by status and type, tested target retrieval by ID, updating target status and fields, scan initiation, and target deletion. All operations work correctly with proper data persistence in MongoDB. Target statistics endpoint correctly reports counts by status, type, and severity."
 
   - task: "Backend Folder Structure Reorganization"
     implemented: true
