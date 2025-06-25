@@ -149,84 +149,53 @@ const WorkflowMonitor = () => {
       </div>
 
       {/* Active Workflows */}
-      <div className="space-y-6">
-        {activeWorkflows.map((workflow) => (
-          <div key={workflow.id} className="bg-gray-800 rounded-lg border border-gray-700">
-            {/* Workflow Header */}
-            <div className="p-6 border-b border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <i className="fas fa-globe mr-3 text-cyan-400 text-xl"></i>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white">{workflow.target}</h3>
-                    <p className="text-gray-400 text-sm">
-                      Started: {workflow.startTime} • Current: {workflow.currentPhase}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-cyan-400">{workflow.progress}%</div>
-                  <div className="text-sm text-gray-400">Complete</div>
-                </div>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mt-4">
-                <div className="w-full bg-gray-600 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-cyan-400 to-blue-500 h-3 rounded-full transition-all duration-500"
-                    style={{width: `${workflow.progress}%`}}
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Workflow Phases */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                {workflow.phases.map((phase, index) => (
-                  <div key={index} className={`border rounded-lg p-4 ${getPhaseStatusColor(phase.status)}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <i className={`${getPhaseIcon(phase.status)} text-lg`}></i>
-                      <span className="text-sm font-medium">{phase.results}</span>
-                    </div>
-                    
-                    <h4 className="font-semibold text-sm mb-2">{phase.name}</h4>
-                    
-                    <div className="space-y-1">
-                      {phase.tools.map((tool, toolIndex) => (
-                        <div key={toolIndex} className="flex items-center text-xs">
-                          <div className={`w-2 h-2 rounded-full mr-2 ${
-                            phase.status === 'completed' ? 'bg-green-400' :
-                            phase.status === 'running' ? 'bg-yellow-400' : 'bg-gray-500'
-                          }`}></div>
-                          <span className="opacity-75">{tool}</span>
-                        </div>
-                      ))}
+      {activeWorkflows.length > 0 ? (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-white flex items-center">
+            <i className="fas fa-play mr-2 text-cyan-400"></i>
+            Active Workflows ({activeWorkflows.length})
+          </h2>
+          
+          {activeWorkflows.map((workflow) => (
+            <div key={workflow.id} className="bg-gray-800 rounded-lg border border-gray-700">
+              {/* Workflow Header */}
+              <div className="p-6 border-b border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <i className="fas fa-globe mr-3 text-cyan-400 text-xl"></i>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{workflow.target}</h3>
+                      <p className="text-gray-400 text-sm">
+                        Started: {new Date(workflow.start_time).toLocaleString()} • Tool: {workflow.tool_name}
+                      </p>
                     </div>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-cyan-400">{workflow.status}</div>
+                    <div className="text-sm text-gray-400">{workflow.category}</div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Real-time Logs */}
-            <div className="p-6 border-t border-gray-700">
-              <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
-                <i className="fas fa-terminal mr-2 text-cyan-400"></i>
-                Real-time Logs
-              </h4>
-              <div className="bg-black rounded-lg p-4 font-mono text-sm max-h-32 overflow-y-auto">
-                <div className="text-green-400">[2025-03-15 15:42:31] HTTPx: Checking liveness for 127 subdomains...</div>
-                <div className="text-yellow-400">[2025-03-15 15:42:32] HTTPx: Found 89 live subdomains</div>
-                <div className="text-cyan-400">[2025-03-15 15:42:33] Dalfox: Starting XSS scan on 45 parameters...</div>
-                <div className="text-green-400">[2025-03-15 15:42:34] Dalfox: Found potential XSS in /search?q=</div>
-                <div className="text-yellow-400">[2025-03-15 15:42:35] SQLMap: Testing 23 injection points...</div>
-                <div className="text-red-400">[2025-03-15 15:42:36] SQLMap: SQL injection detected in /login.php</div>
+              {/* Workflow Details */}
+              <div className="p-6">
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-2">Results Preview</h4>
+                  <pre className="text-sm text-gray-300 overflow-x-auto">
+                    {JSON.stringify(workflow.results, null, 2).slice(0, 300)}...
+                  </pre>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-gray-800 rounded-lg border border-gray-700 p-12 text-center">
+          <i className="fas fa-play-circle text-6xl text-gray-600 mb-4"></i>
+          <h3 className="text-xl font-semibold text-white mb-2">No Active Workflows</h3>
+          <p className="text-gray-400">Start a new reconnaissance scan to see workflow progress here.</p>
+        </div>
+      )}
 
       {/* Workflow Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
