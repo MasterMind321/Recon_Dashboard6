@@ -116,40 +116,40 @@ const Dashboard = () => {
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Subdomains Found</p>
-              <p className="text-2xl font-bold text-green-400">{stats.subdomainsFound}</p>
+              <p className="text-gray-400 text-sm">Total Tools</p>
+              <p className="text-2xl font-bold text-green-400">{stats.totalTools}</p>
             </div>
-            <i className="fas fa-sitemap text-2xl text-green-400"></i>
+            <i className="fas fa-tools text-2xl text-green-400"></i>
           </div>
         </div>
         
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Live Subdomains</p>
-              <p className="text-2xl font-bold text-blue-400">{stats.liveSubdomains}</p>
+              <p className="text-gray-400 text-sm">Installed Tools</p>
+              <p className="text-2xl font-bold text-blue-400">{stats.installedTools}</p>
             </div>
-            <i className="fas fa-globe text-2xl text-blue-400"></i>
+            <i className="fas fa-download text-2xl text-blue-400"></i>
           </div>
         </div>
         
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Vulnerabilities</p>
-              <p className="text-2xl font-bold text-red-400">{stats.vulnerabilities}</p>
+              <p className="text-gray-400 text-sm">Online Tools</p>
+              <p className="text-2xl font-bold text-green-400">{stats.onlineTools}</p>
             </div>
-            <i className="fas fa-shield-alt text-2xl text-red-400"></i>
+            <i className="fas fa-check-circle text-2xl text-green-400"></i>
           </div>
         </div>
         
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Completed</p>
-              <p className="text-2xl font-bold text-purple-400">{stats.completedScans}</p>
+              <p className="text-gray-400 text-sm">Scan Results</p>
+              <p className="text-2xl font-bold text-purple-400">{stats.scanResults}</p>
             </div>
-            <i className="fas fa-check-circle text-2xl text-purple-400"></i>
+            <i className="fas fa-chart-bar text-2xl text-purple-400"></i>
           </div>
         </div>
       </div>
