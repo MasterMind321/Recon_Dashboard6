@@ -409,6 +409,19 @@ const TargetManagement = () => {
                   <option value="port-scan">Port Scanning</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={newTarget.notes}
+                  onChange={(e) => setNewTarget({...newTarget, notes: e.target.value})}
+                  placeholder="Additional notes about this target..."
+                  rows="3"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 resize-none"
+                />
+              </div>
               
               <div className="flex space-x-3 pt-4">
                 <button
