@@ -9,27 +9,41 @@ import AdminPanel from './components/AdminPanel';
 import ToolsManagement from './components/ToolsManagement';
 
 function App() {
-  const [activeScans, setActiveScans] = useState(3);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'success',
-      message: 'Subdomain enumeration completed for example.com',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 2,
-      type: 'warning',
-      message: 'High-severity XSS vulnerability found in api.target.com',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 3,
-      type: 'info',
-      message: 'Port scan initiated for 127 live subdomains',
-      timestamp: new Date().toISOString()
+  const [activeScans, setActiveScans] = useState(0);
+  const [toolStats, setToolStats] = useState({
+    installed: 0,
+    not_installed: 0,
+    failed: 0,
+    online: 0,
+    busy: 0
+  });
+  const [recentScans, setRecentScans] = useState([]);
+
+  useEffect(() => {
+    fetchToolStats();
+    fetchRecentScans();
+  }, []);
+
+  const fetchToolStats = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/tools/stats`);
+      const data = await response.json();
+      setToolStats(data);
+    } catch (error) {
+      console.error('Error fetching tool stats:', error);
     }
-  ]);
+  };
+
+  const fetchRecentScans = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/scan-results`);
+      const data = await response.json();
+      setRecentScans(data.slice(0, 5)); // Get latest 5 scans
+    } catch (error) {
+      console.error('Error fetching recent scans:', error);
+      // Keep empty array as fallback
+    }
+  };
 
   return (
     <Router>
