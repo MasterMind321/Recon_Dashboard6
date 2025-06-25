@@ -205,7 +205,7 @@ async def get_target_stats():
         db = get_database()
         
         # Get all targets
-        targets = list(db.targets.find())
+        targets = await db.targets.find().to_list(1000)
         
         # Calculate statistics
         total_targets = len(targets)
