@@ -1,48 +1,82 @@
 import React, { useState, useEffect } from 'react';
 
 const WorkflowMonitor = () => {
-  const [activeWorkflows, setActiveWorkflows] = useState([
-    {
-      id: 1,
-      target: 'example.com',
-      status: 'running',
-      currentPhase: 'Vulnerability Scanning',
-      progress: 75,
-      startTime: '2025-03-15 10:30:00',
-      phases: [
-        { name: 'Subdomain Enumeration', status: 'completed', tools: ['subfinder', 'amass', 'puredns'], results: 234 },
-        { name: 'ASN Expansion', status: 'completed', tools: ['mapcidr', 'asnlookup'], results: 45 },
-        { name: 'DNS Resolution', status: 'completed', tools: ['puredns', 'dnsx'], results: 198 },
-        { name: 'Liveness Check', status: 'completed', tools: ['httpx'], results: 127 },
-        { name: 'Web Analysis', status: 'completed', tools: ['whatweb', 'wappalyzer', 'gowitness'], results: 89 },
-        { name: 'JS Extraction', status: 'completed', tools: ['subjs', 'getjswords'], results: 156 },
-        { name: 'Port Scanning', status: 'completed', tools: ['nmap', 'masscan'], results: 78 },
-        { name: 'Vulnerability Scanning', status: 'running', tools: ['dalfox', 'sqlmap', 'nuclei'], results: 12 },
-        { name: 'Directory Fuzzing', status: 'pending', tools: ['ffuf', 'feroxbuster'], results: 0 },
-        { name: 'Result Aggregation', status: 'pending', tools: ['notify'], results: 0 }
-      ]
-    },
-    {
-      id: 2,
-      target: 'target.com',
-      status: 'running',
-      currentPhase: 'Port Scanning',
-      progress: 45,
-      startTime: '2025-03-15 14:15:00',
-      phases: [
-        { name: 'Subdomain Enumeration', status: 'completed', tools: ['subfinder', 'amass'], results: 156 },
-        { name: 'ASN Expansion', status: 'completed', tools: ['mapcidr'], results: 23 },
-        { name: 'DNS Resolution', status: 'completed', tools: ['puredns', 'dnsx'], results: 134 },
-        { name: 'Liveness Check', status: 'completed', tools: ['httpx'], results: 89 },
-        { name: 'Web Analysis', status: 'running', tools: ['whatweb', 'gowitness'], results: 45 },
-        { name: 'JS Extraction', status: 'pending', tools: ['subjs'], results: 0 },
-        { name: 'Port Scanning', status: 'running', tools: ['nmap'], results: 34 },
-        { name: 'Vulnerability Scanning', status: 'pending', tools: ['nuclei'], results: 0 },
-        { name: 'Directory Fuzzing', status: 'pending', tools: ['ffuf'], results: 0 },
-        { name: 'Result Aggregation', status: 'pending', tools: ['notify'], results: 0 }
-      ]
+  const [tools, setTools] = useState([]);
+  const [toolStats, setToolStats] = useState({
+    installation: { installed: 0, not_installed: 0, failed: 0, outdated: 0 },
+    status: { online: 0, busy: 0 },
+    categories: {}
+  });
+  const [activeWorkflows, setActiveWorkflows] = useState([]);
+
+  useEffect(() => {
+    fetchTools();
+    fetchToolStats();
+    fetchActiveWorkflows();
+  }, []);
+
+  const fetchTools = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/tools`);
+      const data = await response.json();
+      setTools(data);
+    } catch (error) {
+      console.error('Error fetching tools:', error);
     }
-  ]);
+  };
+
+  const fetchToolStats = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/tools/stats`);
+      const data = await response.json();
+      setToolStats(data);
+    } catch (error) {
+      console.error('Error fetching tool stats:', error);
+    }
+  };
+
+  const fetchActiveWorkflows = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/scan-results`);
+      const data = await response.json();
+      const runningScans = data.filter(scan => scan.status === 'running').slice(0, 3);
+      setActiveWorkflows(runningScans);
+    } catch (error) {
+      console.error('Error fetching active workflows:', error);
+    }
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      subdomain_enumeration: '#3b82f6',
+      liveness_fingerprinting: '#10b981',
+      javascript_endpoint: '#f59e0b',
+      vulnerability_scanning: '#ef4444',
+      historical_data: '#8b5cf6',
+      directory_fuzzing: '#f97316',
+      port_scanning: '#a16207',
+      cloud_recon: '#0ea5e9',
+      reporting_notification: '#eab308',
+      utility_misc: '#6b7280'
+    };
+    return colors[category] || '#6b7280';
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      subdomain_enumeration: 'fas fa-sitemap',
+      liveness_fingerprinting: 'fas fa-heartbeat',
+      javascript_endpoint: 'fab fa-js',
+      vulnerability_scanning: 'fas fa-bug',
+      historical_data: 'fas fa-history',
+      directory_fuzzing: 'fas fa-folder',
+      port_scanning: 'fas fa-network-wired',
+      cloud_recon: 'fas fa-cloud',
+      reporting_notification: 'fas fa-bell',
+      utility_misc: 'fas fa-tools'
+    };
+    return icons[category] || 'fas fa-tools';
+  };
 
   const getPhaseStatusColor = (status) => {
     switch (status) {
