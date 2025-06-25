@@ -140,18 +140,18 @@ async def delete_target(target_id: str):
         db = get_database()
         
         # Check if target exists
-        existing = db.targets.find_one({"id": target_id})
+        existing = await db.targets.find_one({"id": target_id})
         if not existing:
             raise HTTPException(status_code=404, detail="Target not found")
         
         # Delete the target
-        result = db.targets.delete_one({"id": target_id})
+        result = await db.targets.delete_one({"id": target_id})
         
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Target not found")
             
         # Also delete related scan results
-        db.scan_results.delete_many({"target": existing["domain"]})
+        await db.scan_results.delete_many({"target": existing["domain"]})
         
         return {"message": "Target deleted successfully"}
         
