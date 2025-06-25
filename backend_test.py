@@ -1518,7 +1518,75 @@ def main():
     print("\n--- Getting Liveness Statistics ---")
     tester.test_get_liveness_stats()
     
-    # 13. Test target stats again (should show our targets with updated subdomain counts)
+    # Test JavaScript/Endpoint Discovery API
+    print("\n==== JavaScript/Endpoint Discovery Endpoints ====")
+    
+    # 1. Test getting JavaScript tools status
+    print("\n--- JavaScript Tools Status ---")
+    tester.test_get_javascript_tools_status()
+    
+    # 2. Test installing JavaScript tools
+    print("\n--- Installing JavaScript Tools ---")
+    tester.test_install_javascript_tools()
+    
+    # 3. Test getting JavaScript tools status again (should show installation in progress)
+    print("\n--- Updated JavaScript Tools Status ---")
+    tester.test_get_javascript_tools_status()
+    
+    # 4. Test starting JavaScript analysis
+    print("\n--- Starting JavaScript Analysis ---")
+    if domain_target_id:
+        # Test with specific tools (jsbeautifier and getjswords should be working)
+        tester.test_start_javascript_analysis(domain_target_id, ["jsbeautifier", "getjswords"])
+    
+    # 5. Test starting JavaScript analysis with invalid target
+    tester.test_start_javascript_analysis_invalid_target()
+    
+    # 6. Test getting JavaScript job
+    print("\n--- Getting JavaScript Job ---")
+    if tester.javascript_job_id:
+        tester.test_get_javascript_job(tester.javascript_job_id)
+    
+    # 7. Test getting JavaScript job with invalid ID
+    tester.test_get_javascript_job_invalid_id()
+    
+    # 8. Test getting JavaScript jobs for target
+    print("\n--- Getting JavaScript Jobs for Target ---")
+    if domain_target_id:
+        tester.test_get_target_javascript_jobs(domain_target_id)
+    
+    # 9. Test getting JavaScript jobs for invalid target
+    tester.test_get_target_javascript_jobs_invalid_target()
+    
+    # 10. Test getting JavaScript results for target
+    print("\n--- Getting JavaScript Results for Target ---")
+    if domain_target_id:
+        tester.test_get_target_javascript_results(domain_target_id)
+    
+    # 11. Test getting JavaScript results for invalid target
+    tester.test_get_target_javascript_results_invalid_target()
+    
+    # 12. Test getting endpoints for target
+    print("\n--- Getting Endpoints for Target ---")
+    if domain_target_id:
+        tester.test_get_target_endpoints(domain_target_id)
+    
+    # 13. Test getting endpoints for invalid target
+    tester.test_get_target_endpoints_invalid_target()
+    
+    # 14. Test getting keywords for target
+    print("\n--- Getting Keywords for Target ---")
+    if domain_target_id:
+        tester.test_get_target_keywords(domain_target_id)
+    
+    # 15. Test getting keywords for invalid target
+    tester.test_get_target_keywords_invalid_target()
+    
+    # 16. Test getting JavaScript statistics
+    print("\n--- Getting JavaScript Statistics ---")
+    tester.test_get_javascript_stats()
+    
+    # 17. Test target stats again (should show our targets with updated subdomain counts)
     print("\n--- Updated Target Stats ---")
     tester.test_get_target_stats()
     
