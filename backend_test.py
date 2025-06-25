@@ -1677,7 +1677,7 @@ class ReconAPITester:
 
 def main():
     # Get the backend URL from the frontend .env file
-    backend_url = "https://88339f30-9278-4886-957c-937b17d137c7.preview.emergentagent.com"
+    backend_url = "https://f1fea40a-624c-44a3-a4aa-3eb86fa11569.preview.emergentagent.com"
     
     print(f"Testing API at: {backend_url}")
     
