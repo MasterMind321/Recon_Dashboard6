@@ -49,7 +49,7 @@ async def create_target(target_request: CreateTargetRequest):
         db = get_database()
         
         # Check if target already exists
-        existing = db.targets.find_one({"domain": target_request.domain})
+        existing = await db.targets.find_one({"domain": target_request.domain})
         if existing:
             raise HTTPException(status_code=400, detail="Target already exists")
         
@@ -63,7 +63,7 @@ async def create_target(target_request: CreateTargetRequest):
         
         # Insert into database
         target_dict = target.dict()
-        db.targets.insert_one(target_dict)
+        await db.targets.insert_one(target_dict)
         
         return target
         
