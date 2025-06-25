@@ -122,15 +122,18 @@ backend:
 
   - task: "Subdomain Enumeration API Implementation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes/subdomain_routes.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented comprehensive subdomain enumeration system with models, service, and API endpoints. Created SubdomainEnumerationService with tool installation and execution functions for 10 tools (subfinder, amass, crt.sh, puredns, dnsx, gotator, dnsgen, github-subdomains, mapcidr, asnlookup). Added API endpoints: POST /api/targets/{target_id}/enumerate-subdomains, GET /api/targets/{target_id}/subdomains, GET /api/enumeration-jobs/{job_id}, GET /api/targets/{target_id}/enumeration-jobs, GET /api/subdomains/stats, POST /api/tools/install, GET /api/tools/status. Installed Go 1.22.4 and Python tools like dnsgen. Some Go tools installation in progress."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing of all Subdomain Enumeration API endpoints completed. All endpoints are working correctly. Successfully tested GET /api/tools/status to check installed tools (crt.sh and asnlookup are installed), POST /api/tools/install to initiate tool installation, POST /api/targets/{target_id}/enumerate-subdomains to start enumeration with specific tools, GET /api/enumeration-jobs/{job_id} to retrieve job details, GET /api/targets/{target_id}/enumeration-jobs to get enumeration history, GET /api/targets/{target_id}/subdomains to retrieve discovered subdomains, and GET /api/subdomains/stats for overall statistics. Background task execution is working properly. The API correctly handles error cases like invalid target IDs. The system successfully updates target subdomain counts after enumeration."
 
   - task: "Backend Folder Structure Reorganization"
     implemented: true
