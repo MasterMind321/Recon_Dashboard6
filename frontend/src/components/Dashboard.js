@@ -2,46 +2,62 @@ import React, { useState, useEffect } from 'react';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    totalTargets: 15,
-    activeScans: 3,
-    subdomainsFound: 1247,
-    vulnerabilities: 23,
-    completedScans: 156,
-    liveSubdomains: 892
+    totalTargets: 0,
+    activeScans: 0,
+    totalTools: 0,
+    installedTools: 0,
+    onlineTools: 0,
+    scanResults: 0
   });
 
-  const [recentScans, setRecentScans] = useState([
-    {
-      id: 1,
-      target: 'example.com',
-      status: 'completed',
-      progress: 100,
-      subdomains: 234,
-      vulnerabilities: 7,
-      startTime: '2025-03-15 10:30:00',
-      endTime: '2025-03-15 12:45:00'
+  const [toolStats, setToolStats] = useState({
+    installation: {
+      installed: 0,
+      not_installed: 0,
+      failed: 0,
+      outdated: 0
     },
-    {
-      id: 2,
-      target: 'target.com',
-      status: 'running',
-      progress: 65,
-      subdomains: 127,
-      vulnerabilities: 3,
-      startTime: '2025-03-15 14:15:00',
-      currentPhase: 'Vulnerability Scanning'
+    status: {
+      online: 0,
+      busy: 0
     },
-    {
-      id: 3,
-      target: 'testsite.org',
-      status: 'running',
-      progress: 30,
-      subdomains: 89,
-      vulnerabilities: 1,
-      startTime: '2025-03-15 15:45:00',
-      currentPhase: 'Port Scanning'
+    categories: {}
+  });
+
+  const [recentScans, setRecentScans] = useState([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch tool statistics
+      const toolStatsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/tools/stats`);
+      const toolStatsData = await toolStatsResponse.json();
+      setToolStats(toolStatsData);
+
+      // Fetch recent scan results
+      const scansResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/scan-results`);
+      const scansData = await scansResponse.json();
+      setRecentScans(scansData.slice(0, 5));
+
+      // Calculate total tools
+      const totalTools = Object.values(toolStatsData.categories).reduce((sum, count) => sum + count, 0);
+
+      // Update stats
+      setStats({
+        totalTargets: [...new Set(scansData.map(scan => scan.target))].length,
+        activeScans: scansData.filter(scan => scan.status === 'running').length,
+        totalTools: totalTools,
+        installedTools: toolStatsData.installation.installed,
+        onlineTools: toolStatsData.status.online,
+        scanResults: scansData.length
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     }
-  ]);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
