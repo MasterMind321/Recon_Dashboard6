@@ -1,7 +1,8 @@
 import requests
 import sys
 import json
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Tuple, Optional
 
 class ReconAPITester:
@@ -10,6 +11,7 @@ class ReconAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.tool_id = None  # Will store a tool ID for update/install tests
+        self.scan_result_id = None  # Will store a scan result ID for tests
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
@@ -105,10 +107,36 @@ class ReconAPITester:
                 categories = set(tool.get('category') for tool in data)
                 print(f"Found categories: {', '.join(categories)}")
                 
+                # Verify all 10 categories are present
+                expected_categories = {
+                    "subdomain_enumeration", 
+                    "liveness_fingerprinting", 
+                    "javascript_endpoint",
+                    "vulnerability_scanning", 
+                    "historical_data", 
+                    "directory_fuzzing",
+                    "port_scanning",
+                    "cloud_recon",
+                    "reporting_notification",
+                    "utility_misc"
+                }
+                
+                missing_categories = expected_categories - set(categories)
+                if missing_categories:
+                    print(f"⚠️ Missing categories: {', '.join(missing_categories)}")
+                else:
+                    print(f"✅ All 10 categories are present")
+                
                 # Check color coding
                 for tool in data:
                     if not tool.get('icon_color') or not tool.get('category_color'):
                         print(f"⚠️ Tool {tool.get('name')} is missing color coding")
+                        
+                # Verify we have at least 58 tools
+                if len(data) < 58:
+                    print(f"⚠️ Expected at least 58 tools, but found {len(data)}")
+                else:
+                    print(f"✅ Found {len(data)} tools (expected at least 58)")
             else:
                 print("⚠️ No tools returned from API")
                 
@@ -116,12 +144,27 @@ class ReconAPITester:
     
     def test_get_tools_by_category(self, category):
         """Test getting tools by category"""
-        return self.run_test(
+        success, data = self.run_test(
             f"Get Tools by Category: {category}",
             "GET",
             f"api/tools/category/{category}",
             200
         )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} tools in category '{category}'")
+                
+                # Verify all tools in this response have the correct category
+                for tool in data:
+                    if tool.get('category') != category:
+                        print(f"⚠️ Tool {tool.get('name')} has incorrect category: {tool.get('category')} (expected {category})")
+                        success = False
+            else:
+                print(f"⚠️ Expected a list of tools, got: {type(data)}")
+                success = False
+                
+        return success, data
     
     def test_get_tool_stats(self):
         """Test getting tool statistics"""
@@ -141,8 +184,38 @@ class ReconAPITester:
                 print(f"Installation stats: {json.dumps(data['installation'], indent=2)}")
                 print(f"Status stats: {json.dumps(data['status'], indent=2)}")
                 print(f"Category counts: {json.dumps(data['categories'], indent=2)}")
+                
+                # Verify all 10 categories are present in the stats
+                expected_categories = {
+                    "subdomain_enumeration", 
+                    "liveness_fingerprinting", 
+                    "javascript_endpoint",
+                    "vulnerability_scanning", 
+                    "historical_data", 
+                    "directory_fuzzing",
+                    "port_scanning",
+                    "cloud_recon",
+                    "reporting_notification",
+                    "utility_misc"
+                }
+                
+                missing_categories = expected_categories - set(data['categories'].keys())
+                if missing_categories:
+                    print(f"⚠️ Missing categories in stats: {', '.join(missing_categories)}")
+                    success = False
+                else:
+                    print(f"✅ All 10 categories are present in stats")
+                    
+                # Verify total tool count matches expected
+                total_tools = sum(data['categories'].values())
+                if total_tools < 58:
+                    print(f"⚠️ Total tools in stats ({total_tools}) is less than expected (58+)")
+                    success = False
+                else:
+                    print(f"✅ Total tools in stats: {total_tools}")
             else:
                 print("⚠️ Tool statistics structure is incorrect")
+                success = False
                 
         return success, data
     
@@ -199,6 +272,87 @@ class ReconAPITester:
             "GET",
             "api/tools/category/invalid_category",
             422  # FastAPI validation error
+        )
+        
+    def test_create_scan_result(self, tool_name, category):
+        """Test creating a new scan result"""
+        scan_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+        
+        scan_data = {
+            "id": scan_id,
+            "target": "example.com",
+            "tool_name": tool_name,
+            "category": category,
+            "status": "completed",
+            "results": {
+                "findings": [
+                    {"type": "subdomain", "value": "api.example.com"},
+                    {"type": "subdomain", "value": "admin.example.com"}
+                ],
+                "summary": {
+                    "total_findings": 2,
+                    "severity": "medium"
+                }
+            },
+            "start_time": (now - timedelta(minutes=5)).isoformat(),
+            "end_time": now.isoformat(),
+            "duration_seconds": 300,
+            "output_file": "/tmp/scan_results.json"
+        }
+        
+        success, data = self.run_test(
+            "Create Scan Result",
+            "POST",
+            "api/scan-results",
+            200,
+            data=scan_data
+        )
+        
+        if success and data:
+            self.scan_result_id = data.get('id')
+            print(f"Created scan result with ID: {self.scan_result_id}")
+            
+        return success, data
+    
+    def test_get_scan_results(self):
+        """Test getting all scan results"""
+        success, data = self.run_test(
+            "Get Scan Results",
+            "GET",
+            "api/scan-results",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} scan results")
+                
+                # Verify structure of scan results
+                if len(data) > 0:
+                    first_result = data[0]
+                    required_fields = ['id', 'target', 'tool_name', 'category', 'status', 'results', 'start_time']
+                    missing_fields = [field for field in required_fields if field not in first_result]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Scan result missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Scan result has all required fields")
+            else:
+                print(f"⚠️ Expected a list of scan results, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_scan_results_with_filter(self, target):
+        """Test getting scan results with target filter"""
+        return self.run_test(
+            f"Get Scan Results for target: {target}",
+            "GET",
+            "api/scan-results",
+            200,
+            params={"target": target}
         )
 
 def main():
