@@ -8,6 +8,7 @@ import ScanResults from './components/ScanResults';
 import VulnerabilityResults from './components/VulnerabilityResults';
 import AdminPanel from './components/AdminPanel';
 import NotificationCenter from './components/NotificationCenter';
+import ToolsManagement from './components/ToolsManagement';
 
 function App() {
   const [activeScans, setActiveScans] = useState(3);
@@ -62,6 +63,16 @@ function App() {
               >
                 <i className="fas fa-bullseye mr-3"></i>
                 Target Management
+              </NavLink>
+              
+              <NavLink 
+                to="/tools" 
+                className={({ isActive }) => 
+                  `block p-3 rounded-lg transition-colors ${isActive ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`
+                }
+              >
+                <i className="fas fa-toolbox mr-3"></i>
+                Tools Management
               </NavLink>
               
               <NavLink 
@@ -137,6 +148,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/targets" element={<TargetManagement />} />
+              <Route path="/tools" element={<ToolsManagement />} />
               <Route path="/workflow" element={<WorkflowMonitor />} />
               <Route path="/results" element={<ScanResults />} />
               <Route path="/vulnerabilities" element={<VulnerabilityResults />} />
