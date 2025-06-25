@@ -1276,6 +1276,394 @@ class ReconAPITester:
                 
         return success, data
 
+    # JavaScript/Endpoint Discovery API Tests
+    def test_get_javascript_tools_status(self):
+        """Test getting JavaScript tools status"""
+        success, data = self.run_test(
+            "Get JavaScript Tools Status",
+            "GET",
+            "api/javascript-tools/status",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the response
+            if 'tools' in data and 'total_tools' in data and 'installed_tools' in data:
+                print("✅ JavaScript tools status structure is correct")
+                
+                # Print tools status
+                print(f"Total tools: {data['total_tools']}")
+                print(f"Installed tools: {data['installed_tools']}")
+                
+                # Check specific tools
+                tools = data['tools']
+                for tool, installed in tools.items():
+                    print(f"Tool {tool}: {'Installed' if installed else 'Not installed'}")
+                    
+                # Verify all 6 tools are present
+                expected_tools = [
+                    "subjs", "xnlinkfinder", "linkfinder", "getjswords", "jsparser", "jsbeautifier"
+                ]
+                
+                missing_tools = [tool for tool in expected_tools if tool not in tools]
+                if missing_tools:
+                    print(f"⚠️ Missing tools in status: {', '.join(missing_tools)}")
+                    success = False
+                else:
+                    print(f"✅ All 6 JavaScript tools are present in status")
+            else:
+                print("⚠️ JavaScript tools status structure is incorrect")
+                success = False
+                
+        return success, data
+    
+    def test_install_javascript_tools(self):
+        """Test installing JavaScript tools"""
+        return self.run_test(
+            "Install JavaScript Tools",
+            "POST",
+            "api/javascript-tools/install",
+            200
+        )
+    
+    def test_start_javascript_analysis(self, target_id=None, tools=None):
+        """Test starting JavaScript analysis for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for JavaScript analysis test")
+                return False, {}
+            target_id = self.target_id
+            
+        data = {
+            "notes": "Test JavaScript analysis",
+            "include_external_js": False,
+            "deep_analysis": True,
+            "keyword_extraction": True
+        }
+        if tools:
+            data["tools"] = tools
+            
+        success, response = self.run_test(
+            f"Start JavaScript Analysis for Target: {target_id}",
+            "POST",
+            f"api/targets/{target_id}/analyze-javascript",
+            200,
+            data=data
+        )
+        
+        if success and response:
+            self.javascript_job_id = response.get('id')
+            print(f"Created JavaScript analysis job with ID: {self.javascript_job_id}")
+            
+            # Verify the job has the correct data
+            if response.get('target_id') != target_id:
+                print(f"⚠️ JavaScript job has incorrect target_id: {response.get('target_id')} (expected {target_id})")
+                success = False
+                
+            if response.get('status') != 'pending':
+                print(f"⚠️ JavaScript job has incorrect status: {response.get('status')} (expected 'pending')")
+                success = False
+                
+        return success, response
+    
+    def test_start_javascript_analysis_invalid_target(self):
+        """Test starting JavaScript analysis for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Start JavaScript Analysis with Invalid Target ID: {invalid_id}",
+            "POST",
+            f"api/targets/{invalid_id}/analyze-javascript",
+            404,  # Expect 404 Not Found
+            data={"notes": "This should fail"}
+        )
+    
+    def test_get_javascript_job(self, job_id=None):
+        """Test getting a specific JavaScript analysis job"""
+        if job_id is None:
+            if self.javascript_job_id is None:
+                print("⚠️ No JavaScript job ID available for get test")
+                return False, {}
+            job_id = self.javascript_job_id
+            
+        success, data = self.run_test(
+            f"Get JavaScript Job: {job_id}",
+            "GET",
+            f"api/javascript-jobs/{job_id}",
+            200
+        )
+        
+        if success and data:
+            print(f"Retrieved JavaScript job for domain: {data.get('domain')} (status: {data.get('status')})")
+            
+            # Verify the job has all required fields
+            required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ JavaScript job missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ JavaScript job has all required fields")
+                
+        return success, data
+    
+    def test_get_javascript_job_invalid_id(self):
+        """Test getting a JavaScript job with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get JavaScript Job with Invalid ID: {invalid_id}",
+            "GET",
+            f"api/javascript-jobs/{invalid_id}",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_javascript_jobs(self, target_id=None):
+        """Test getting JavaScript jobs for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for JavaScript jobs test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get JavaScript Jobs for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/javascript-jobs",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} JavaScript jobs for target")
+                
+                # Verify structure of JavaScript jobs
+                if len(data) > 0:
+                    first_job = data[0]
+                    required_fields = ['id', 'target_id', 'domain', 'status', 'created_at']
+                    missing_fields = [field for field in required_fields if field not in first_job]
+                    
+                    if missing_fields:
+                        print(f"⚠️ JavaScript job missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ JavaScript job has all required fields")
+            else:
+                print(f"⚠️ Expected a list of JavaScript jobs, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_javascript_jobs_invalid_target(self):
+        """Test getting JavaScript jobs for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get JavaScript Jobs with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/javascript-jobs",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_javascript_results(self, target_id=None):
+        """Test getting JavaScript results for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for JavaScript results test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get JavaScript Results for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/javascript-results",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} JavaScript results for target")
+                
+                # Verify structure of JavaScript results
+                if len(data) > 0:
+                    first_result = data[0]
+                    required_fields = ['subdomain', 'js_files', 'endpoints', 'keywords', 'total_js_files', 'total_endpoints', 'total_keywords']
+                    missing_fields = [field for field in required_fields if field not in first_result]
+                    
+                    if missing_fields:
+                        print(f"⚠️ JavaScript result missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ JavaScript result has all required fields")
+                        
+                    # Print some subdomain examples
+                    print(f"  Subdomain: {first_result.get('subdomain')}")
+                    print(f"  Total JS files: {first_result.get('total_js_files')}")
+                    print(f"  Total endpoints: {first_result.get('total_endpoints')}")
+                    print(f"  Total keywords: {first_result.get('total_keywords')}")
+            else:
+                print(f"⚠️ Expected a list of JavaScript results, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_javascript_results_invalid_target(self):
+        """Test getting JavaScript results for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get JavaScript Results with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/javascript-results",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_endpoints(self, target_id=None):
+        """Test getting endpoints for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for endpoints test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get Endpoints for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/endpoints",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} endpoints for target")
+                
+                # Verify structure of endpoints
+                if len(data) > 0:
+                    first_endpoint = data[0]
+                    required_fields = ['url', 'method', 'endpoint_type', 'source_js_file', 'confidence_score']
+                    missing_fields = [field for field in required_fields if field not in first_endpoint]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Endpoint missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Endpoint has all required fields")
+                        
+                    # Print some endpoint examples
+                    for i, endpoint in enumerate(data[:3]):
+                        print(f"  Endpoint {i+1}: {endpoint.get('url')}")
+                        print(f"    Type: {endpoint.get('endpoint_type')}")
+                        print(f"    Method: {endpoint.get('method')}")
+                        print(f"    Confidence: {endpoint.get('confidence_score')}")
+            else:
+                print(f"⚠️ Expected a list of endpoints, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_endpoints_invalid_target(self):
+        """Test getting endpoints for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Endpoints with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/endpoints",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_target_keywords(self, target_id=None):
+        """Test getting keywords for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for keywords test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get Keywords for Target: {target_id}",
+            "GET",
+            f"api/targets/{target_id}/keywords",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} keywords for target")
+                
+                # Verify structure of keywords
+                if len(data) > 0:
+                    first_keyword = data[0]
+                    required_fields = ['keyword', 'context', 'keyword_type', 'source_js_file', 'confidence_score']
+                    missing_fields = [field for field in required_fields if field not in first_keyword]
+                    
+                    if missing_fields:
+                        print(f"⚠️ Keyword missing required fields: {', '.join(missing_fields)}")
+                        success = False
+                    else:
+                        print("✅ Keyword has all required fields")
+                        
+                    # Print some keyword examples
+                    for i, keyword in enumerate(data[:3]):
+                        print(f"  Keyword {i+1}: {keyword.get('keyword')}")
+                        print(f"    Type: {keyword.get('keyword_type')}")
+                        print(f"    Confidence: {keyword.get('confidence_score')}")
+            else:
+                print(f"⚠️ Expected a list of keywords, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_target_keywords_invalid_target(self):
+        """Test getting keywords for an invalid target"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Keywords with Invalid Target ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}/keywords",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_get_javascript_stats(self):
+        """Test getting overall JavaScript statistics"""
+        success, data = self.run_test(
+            "Get JavaScript Statistics",
+            "GET",
+            "api/javascript/stats",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the stats response
+            required_fields = ['total_jobs', 'active_jobs', 'completed_jobs', 
+                              'failed_jobs', 'total_hosts_analyzed', 'total_js_files_discovered',
+                              'total_endpoints_discovered', 'total_keywords_discovered',
+                              'by_status', 'by_tool_success_rate', 'avg_execution_time']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ JavaScript stats missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ JavaScript stats has all required fields")
+                print(f"Total jobs: {data['total_jobs']}")
+                print(f"Active jobs: {data['active_jobs']}")
+                print(f"Completed jobs: {data['completed_jobs']}")
+                print(f"Failed jobs: {data['failed_jobs']}")
+                print(f"Total hosts analyzed: {data['total_hosts_analyzed']}")
+                print(f"Total JS files discovered: {data['total_js_files_discovered']}")
+                print(f"Total endpoints discovered: {data['total_endpoints_discovered']}")
+                print(f"Total keywords discovered: {data['total_keywords_discovered']}")
+                print(f"By status: {json.dumps(data['by_status'], indent=2)}")
+                print(f"Tool success rates: {json.dumps(data['by_tool_success_rate'], indent=2)}")
+                print(f"Average execution time: {data['avg_execution_time']:.2f} seconds")
+                if data.get('most_productive_tool'):
+                    print(f"Most productive tool: {data['most_productive_tool']}")
+                
+        return success, data
+
     def __init__(self, base_url):
         self.base_url = base_url
         self.tests_run = 0
