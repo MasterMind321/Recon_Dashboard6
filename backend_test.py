@@ -405,6 +405,24 @@ def main():
         tester.test_update_tool(tester.tool_id)
         tester.test_install_tool(tester.tool_id)
     
+    # Test scan results endpoints
+    print("\n==== Scan Results Endpoints ====")
+    if tester.tool_id and all_tools_success and tools_data:
+        # Find a tool to use for scan result test
+        tool_name = tools_data[0].get('name')
+        category = tools_data[0].get('category')
+        
+        # Create a scan result
+        tester.test_create_scan_result(tool_name, category)
+        
+        # Get all scan results
+        tester.test_get_scan_results()
+        
+        # Get scan results with filter
+        tester.test_get_scan_results_with_filter("example.com")
+    else:
+        print("⚠️ Skipping scan results tests due to missing tool data")
+    
     # Test error conditions
     print("\n==== Error Conditions ====")
     tester.test_invalid_tool_id()
@@ -412,6 +430,9 @@ def main():
 
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
+    success_rate = (tester.tests_passed / tester.tests_run) * 100 if tester.tests_run > 0 else 0
+    print(f"Success rate: {success_rate:.2f}%")
+    
     return 0 if tester.tests_passed == tester.tests_run else 1
 
 if __name__ == "__main__":
