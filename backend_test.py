@@ -14,6 +14,7 @@ class ReconAPITester:
         self.tool_id = None  # Will store a tool ID for update/install tests
         self.scan_result_id = None  # Will store a scan result ID for tests
         self.target_id = None  # Will store a target ID for target management tests
+        self.enumeration_job_id = None  # Will store an enumeration job ID for tests
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
