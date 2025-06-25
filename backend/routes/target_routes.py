@@ -168,12 +168,12 @@ async def start_scan(target_id: str):
         db = get_database()
         
         # Find the target
-        target = db.targets.find_one({"id": target_id})
+        target = await db.targets.find_one({"id": target_id})
         if not target:
             raise HTTPException(status_code=404, detail="Target not found")
         
         # Update target status to scanning
-        db.targets.update_one(
+        await db.targets.update_one(
             {"id": target_id}, 
             {
                 "$set": {
@@ -188,7 +188,7 @@ async def start_scan(target_id: str):
         # For now, we'll just update the status
         
         # Fetch and return updated target
-        updated_target = db.targets.find_one({"id": target_id})
+        updated_target = await db.targets.find_one({"id": target_id})
         updated_target.pop("_id", None)
         return Target(**updated_target)
         
