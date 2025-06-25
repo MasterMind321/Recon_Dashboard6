@@ -356,6 +356,351 @@ class ReconAPITester:
             200,
             params={"target": target}
         )
+        
+    # Target Management API Tests
+    def test_get_target_stats(self):
+        """Test getting target statistics"""
+        success, data = self.run_test(
+            "Get Target Statistics",
+            "GET",
+            "api/targets/stats",
+            200
+        )
+        
+        if success and data:
+            # Verify the structure of the stats response
+            required_fields = ['total_targets', 'active_scans', 'total_subdomains', 
+                              'total_vulnerabilities', 'by_status', 'by_type', 'by_severity']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Target stats missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Target stats has all required fields")
+                print(f"Total targets: {data['total_targets']}")
+                print(f"Active scans: {data['active_scans']}")
+                print(f"Total subdomains: {data['total_subdomains']}")
+                print(f"Total vulnerabilities: {data['total_vulnerabilities']}")
+                print(f"By status: {json.dumps(data['by_status'], indent=2)}")
+                print(f"By type: {json.dumps(data['by_type'], indent=2)}")
+                print(f"By severity: {json.dumps(data['by_severity'], indent=2)}")
+                
+        return success, data
+    
+    def test_get_targets(self):
+        """Test getting all targets"""
+        success, data = self.run_test(
+            "Get All Targets",
+            "GET",
+            "api/targets",
+            200
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} targets")
+                
+                # If we have targets, store one ID for later tests
+                if len(data) > 0:
+                    self.target_id = data[0].get('id')
+                    print(f"Using target ID for tests: {self.target_id}")
+            else:
+                print(f"⚠️ Expected a list of targets, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_get_targets_with_filters(self, status=None, target_type=None):
+        """Test getting targets with filters"""
+        params = {}
+        if status:
+            params['status'] = status
+        if target_type:
+            params['type'] = target_type
+            
+        filter_desc = []
+        if status:
+            filter_desc.append(f"status={status}")
+        if target_type:
+            filter_desc.append(f"type={target_type}")
+            
+        filter_str = " and ".join(filter_desc) if filter_desc else "no filters"
+        
+        success, data = self.run_test(
+            f"Get Targets with filters: {filter_str}",
+            "GET",
+            "api/targets",
+            200,
+            params=params
+        )
+        
+        if success and data:
+            if isinstance(data, list):
+                print(f"Found {len(data)} targets with {filter_str}")
+                
+                # Verify filters were applied correctly
+                if status and len(data) > 0:
+                    for target in data:
+                        if target.get('status') != status:
+                            print(f"⚠️ Target {target.get('id')} has incorrect status: {target.get('status')} (expected {status})")
+                            success = False
+                
+                if target_type and len(data) > 0:
+                    for target in data:
+                        if target.get('type') != target_type:
+                            print(f"⚠️ Target {target.get('id')} has incorrect type: {target.get('type')} (expected {target_type})")
+                            success = False
+            else:
+                print(f"⚠️ Expected a list of targets, got: {type(data)}")
+                success = False
+                
+        return success, data
+    
+    def test_create_target(self, domain=None, target_type=None):
+        """Test creating a new target"""
+        if domain is None:
+            # Generate a random domain to avoid duplicates
+            random_id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+            domain = f"test-{random_id}.example.com"
+            
+        if target_type is None:
+            target_type = random.choice(["domain", "ip", "cidr"])
+            
+        target_data = {
+            "domain": domain,
+            "type": target_type,
+            "workflow": "full-recon",
+            "notes": f"Test target created at {datetime.utcnow().isoformat()}"
+        }
+        
+        success, data = self.run_test(
+            f"Create Target: {domain} ({target_type})",
+            "POST",
+            "api/targets",
+            200,
+            data=target_data
+        )
+        
+        if success and data:
+            self.target_id = data.get('id')
+            print(f"Created target with ID: {self.target_id}")
+            
+            # Verify the created target has the correct data
+            for key, value in target_data.items():
+                if data.get(key) != value:
+                    print(f"⚠️ Created target has incorrect {key}: {data.get(key)} (expected {value})")
+                    success = False
+                    
+            # Verify default fields
+            if data.get('status') != 'pending':
+                print(f"⚠️ Created target has incorrect status: {data.get('status')} (expected 'pending')")
+                success = False
+                
+            if data.get('subdomains') != 0:
+                print(f"⚠️ Created target has incorrect subdomains count: {data.get('subdomains')} (expected 0)")
+                success = False
+                
+            if data.get('vulnerabilities') != 0:
+                print(f"⚠️ Created target has incorrect vulnerabilities count: {data.get('vulnerabilities')} (expected 0)")
+                success = False
+                
+            if data.get('severity') != 'none':
+                print(f"⚠️ Created target has incorrect severity: {data.get('severity')} (expected 'none')")
+                success = False
+                
+        return success, data
+    
+    def test_create_duplicate_target(self, domain, target_type):
+        """Test creating a duplicate target (should fail)"""
+        target_data = {
+            "domain": domain,
+            "type": target_type,
+            "workflow": "full-recon",
+            "notes": "Duplicate target test"
+        }
+        
+        return self.run_test(
+            f"Create Duplicate Target: {domain}",
+            "POST",
+            "api/targets",
+            400,  # Expect 400 Bad Request for duplicate
+            data=target_data
+        )
+    
+    def test_get_target_by_id(self, target_id=None):
+        """Test getting a specific target by ID"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for get test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Get Target by ID: {target_id}",
+            "GET",
+            f"api/targets/{target_id}",
+            200
+        )
+        
+        if success and data:
+            print(f"Retrieved target: {data.get('domain')} ({data.get('type')})")
+            
+            # Verify the target has all required fields
+            required_fields = ['id', 'domain', 'type', 'status', 'created_at', 'updated_at', 
+                              'subdomains', 'vulnerabilities', 'severity', 'workflow']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"⚠️ Target missing required fields: {', '.join(missing_fields)}")
+                success = False
+            else:
+                print("✅ Target has all required fields")
+                
+        return success, data
+    
+    def test_get_target_invalid_id(self):
+        """Test getting a target with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Get Target with Invalid ID: {invalid_id}",
+            "GET",
+            f"api/targets/{invalid_id}",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_update_target(self, target_id=None):
+        """Test updating a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for update test")
+                return False, {}
+            target_id = self.target_id
+            
+        update_data = {
+            "status": "active",
+            "notes": f"Updated at {datetime.utcnow().isoformat()}"
+        }
+        
+        success, data = self.run_test(
+            f"Update Target: {target_id}",
+            "PUT",
+            f"api/targets/{target_id}",
+            200,
+            data=update_data
+        )
+        
+        if success and data:
+            print(f"Updated target: {data.get('domain')} (status: {data.get('status')})")
+            
+            # Verify the update was applied correctly
+            for key, value in update_data.items():
+                if data.get(key) != value:
+                    print(f"⚠️ Updated target has incorrect {key}: {data.get(key)} (expected {value})")
+                    success = False
+                    
+        return success, data
+    
+    def test_update_target_invalid_id(self):
+        """Test updating a target with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        update_data = {
+            "status": "active",
+            "notes": "This update should fail"
+        }
+        
+        return self.run_test(
+            f"Update Target with Invalid ID: {invalid_id}",
+            "PUT",
+            f"api/targets/{invalid_id}",
+            404,  # Expect 404 Not Found
+            data=update_data
+        )
+    
+    def test_start_scan(self, target_id=None):
+        """Test starting a scan for a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for scan test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Start Scan for Target: {target_id}",
+            "POST",
+            f"api/targets/{target_id}/scan",
+            200
+        )
+        
+        if success and data:
+            print(f"Started scan for target: {data.get('domain')}")
+            
+            # Verify the scan was started correctly
+            if data.get('status') != 'scanning':
+                print(f"⚠️ Target has incorrect status after scan start: {data.get('status')} (expected 'scanning')")
+                success = False
+                
+            if data.get('last_scan') is None:
+                print("⚠️ Target missing last_scan timestamp after scan start")
+                success = False
+                
+        return success, data
+    
+    def test_start_scan_invalid_id(self):
+        """Test starting a scan for a target with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Start Scan with Invalid Target ID: {invalid_id}",
+            "POST",
+            f"api/targets/{invalid_id}/scan",
+            404  # Expect 404 Not Found
+        )
+    
+    def test_delete_target(self, target_id=None):
+        """Test deleting a target"""
+        if target_id is None:
+            if self.target_id is None:
+                print("⚠️ No target ID available for delete test")
+                return False, {}
+            target_id = self.target_id
+            
+        success, data = self.run_test(
+            f"Delete Target: {target_id}",
+            "DELETE",
+            f"api/targets/{target_id}",
+            200
+        )
+        
+        if success:
+            print(f"Successfully deleted target: {target_id}")
+            
+            # Verify the target was actually deleted by trying to get it
+            verify_success, _ = self.run_test(
+                f"Verify Target Deletion: {target_id}",
+                "GET",
+                f"api/targets/{target_id}",
+                404  # Expect 404 Not Found after deletion
+            )
+            
+            if not verify_success:
+                print(f"⚠️ Target {target_id} was not properly deleted")
+                success = False
+                
+        return success, data
+    
+    def test_delete_target_invalid_id(self):
+        """Test deleting a target with an invalid ID"""
+        invalid_id = str(uuid.uuid4())  # Generate a random UUID that shouldn't exist
+        
+        return self.run_test(
+            f"Delete Target with Invalid ID: {invalid_id}",
+            "DELETE",
+            f"api/targets/{invalid_id}",
+            404  # Expect 404 Not Found
+        )
 
 def main():
     # Get the backend URL from the frontend .env file
