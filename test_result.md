@@ -202,6 +202,18 @@ backend:
         comment: "Created organized folder structure with models/, routes/, services/, data/ folders. Separated concerns properly but kept original server.py for compatibility"
 
 frontend:
+  - task: "Hierarchical Domain Results System Implementation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/DomainResultsOverview.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Completely replaced ScanResults.js with new hierarchical domain-based result system. Created 3 new components: DomainResultsOverview (main domain list), DomainDetailPage (comprehensive domain view with subdomains), and SubdomainDetailPage (detailed individual subdomain analysis). Updated App.js routing to support /scan-results (overview), /scan-results/domain/{id} (domain detail), and /scan-results/domain/{id}/subdomain/{name} (subdomain detail). Each level integrates with existing backend APIs for targets, subdomains, liveness, JavaScript analysis, and vulnerability data. System provides hierarchical organization as requested - domains get their own pages, subdomains have detailed views, and all scan results are organized by domain/subdomain hierarchy."
+
   - task: "Target Management Page - Replace Dummy Data with API Integration"
     implemented: true
     working: "NA"
