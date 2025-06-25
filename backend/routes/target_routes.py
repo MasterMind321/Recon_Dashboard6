@@ -9,7 +9,7 @@ from ..models.target_models import (
 )
 from ..services.database import get_database
 
-router = APIRouter()
+router = APIRouter(tags=["targets"])
 logger = logging.getLogger(__name__)
 
 @router.get("/targets", response_model=List[Target])
