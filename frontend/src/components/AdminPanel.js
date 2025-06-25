@@ -318,7 +318,6 @@ const AdminPanel = () => {
 
         <div className="p-6">
           {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'tools' && renderToolStatus()}
           {activeTab === 'queue' && renderJobQueue()}
           {activeTab === 'logs' && (
             <div className="bg-black rounded-lg p-4 font-mono text-sm max-h-96 overflow-y-auto">
