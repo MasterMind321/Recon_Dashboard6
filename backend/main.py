@@ -2,6 +2,7 @@ from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 from .routes.tool_routes import router as tool_router
 from .routes.scan_routes import router as scan_router
+from .routes.target_routes import router as target_router
 from .services.database import close_database
 import logging
 
