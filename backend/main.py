@@ -1,8 +1,8 @@
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
-from routes.tool_routes import router as tool_router
-from routes.scan_routes import router as scan_router
-from services.database import close_database
+from .routes.tool_routes import router as tool_router
+from .routes.scan_routes import router as scan_router
+from .services.database import close_database
 import logging
 
 # Create the main app without a prefix
