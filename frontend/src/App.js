@@ -125,11 +125,7 @@ function App() {
               >
                 <i className="fas fa-bell mr-3"></i>
                 Notifications
-                {notifications.length > 0 && (
-                  <span className="absolute right-2 top-2 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notifications.length}
-                  </span>
-                )}
+
               </NavLink>
               
               <NavLink 
