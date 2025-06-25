@@ -100,13 +100,13 @@ function App() {
               </NavLink>
               
               <NavLink 
-                to="/results" 
+                to="/scan-results" 
                 className={({ isActive }) => 
                   `block p-3 rounded-lg transition-colors ${isActive ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`
                 }
               >
                 <i className="fas fa-chart-bar mr-3"></i>
-                Scan Results
+                Domain Results
               </NavLink>
               
               <NavLink 
