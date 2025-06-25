@@ -291,6 +291,8 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Target Management API Implementation"
+    - "Target Management Page - Replace Dummy Data with API Integration"
     - "Tools Management Page Frontend Testing"
     - "Enhanced Scan Results Page Validation"
     - "Overall UI Integration Testing"
