@@ -271,7 +271,6 @@ const AdminPanel = () => {
 
   const tabs = [
     { id: 'overview', name: 'System Overview', icon: 'fas fa-tachometer-alt' },
-    { id: 'tools', name: 'Tool Status', icon: 'fas fa-tools' },
     { id: 'queue', name: 'Job Queue', icon: 'fas fa-list' },
     { id: 'logs', name: 'System Logs', icon: 'fas fa-file-alt' }
   ];
