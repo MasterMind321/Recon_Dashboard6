@@ -114,28 +114,37 @@ const WorkflowMonitor = () => {
         </div>
       </div>
 
-      {/* Workflow Orchestration Diagram */}
+      {/* Tool Categories Overview */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
         <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
-          <i className="fas fa-project-diagram mr-2 text-cyan-400"></i>
-          Orchestration Flow
+          <i className="fas fa-layer-group mr-2 text-cyan-400"></i>
+          Reconnaissance Tool Categories ({Object.values(toolStats.categories).reduce((sum, count) => sum + count, 0)} Tools)
         </h2>
         
-        <div className="relative">
-          <img 
-            src="https://images.pexels.com/photos/1054397/pexels-photo-1054397.jpeg" 
-            alt="Network Infrastructure" 
-            className="w-full h-32 object-cover rounded-lg opacity-20"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-gray-900/80 rounded-lg p-4 text-center">
-              <h3 className="text-white font-semibold mb-2">Recon Orchestration Pipeline</h3>
-              <p className="text-gray-300 text-sm">
-                Target → Subdomain Enum → ASN Expansion → DNS Resolution → Liveness → 
-                Web Analysis → JS Extraction → Port Scan → Vulnerability Scan → Aggregation
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Object.entries(toolStats.categories).map(([category, count]) => (
+            <div 
+              key={category} 
+              className="border rounded-lg p-4 bg-gray-700 border-gray-600"
+              style={{ borderLeftColor: getCategoryColor(category), borderLeftWidth: '4px' }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <i 
+                  className={`${getCategoryIcon(category)} text-lg`}
+                  style={{ color: getCategoryColor(category) }}
+                ></i>
+                <span className="text-sm font-medium text-white">{count}</span>
+              </div>
+              
+              <h4 className="font-semibold text-sm mb-1 text-white capitalize">
+                {category.replace(/_/g, ' ')}
+              </h4>
+              
+              <div className="text-xs text-gray-400">
+                Tools available
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
 
