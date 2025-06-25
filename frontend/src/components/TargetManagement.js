@@ -81,29 +81,81 @@ const TargetManagement = () => {
     }
   };
 
-  const handleAddTarget = (e) => {
+  const handleAddTarget = async (e) => {
     e.preventDefault();
-    const target = {
-      id: targets.length + 1,
-      domain: newTarget.domain,
-      type: newTarget.type,
-      status: 'pending',
-      subdomains: 0,
-      lastScan: null,
-      vulnerabilities: 0,
-      severity: 'none'
-    };
-    setTargets([...targets, target]);
-    setNewTarget({ domain: '', type: 'domain', workflow: 'full-recon' });
-    setShowAddModal(false);
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/targets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domain: newTarget.domain,
+          type: newTarget.type,
+          workflow: newTarget.workflow,
+          notes: newTarget.notes || null
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create target');
+      }
+
+      // Refresh targets and stats
+      await fetchTargets();
+      
+      // Reset form and close modal
+      setNewTarget({ domain: '', type: 'domain', workflow: 'full-recon', notes: '' });
+      setShowAddModal(false);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error creating target:', err);
+    }
   };
 
-  const startScan = (targetId) => {
-    setTargets(targets.map(target => 
-      target.id === targetId 
-        ? { ...target, status: 'scanning', lastScan: new Date().toLocaleString() }
-        : target
-    ));
+  const startScan = async (targetId) => {
+    try {
+      const response = await fetch(`${backendUrl}/api/targets/${targetId}/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start scan');
+      }
+
+      // Refresh targets to get updated status
+      await fetchTargets();
+    } catch (err) {
+      setError(err.message);
+      console.error('Error starting scan:', err);
+    }
+  };
+
+  const deleteTarget = async (targetId) => {
+    if (!window.confirm('Are you sure you want to delete this target?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/targets/${targetId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete target');
+      }
+
+      // Refresh targets and stats
+      await fetchTargets();
+    } catch (err) {
+      setError(err.message);
+      console.error('Error deleting target:', err);
+    }
   };
 
   return (
