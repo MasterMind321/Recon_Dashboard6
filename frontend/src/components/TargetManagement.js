@@ -1,55 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const TargetManagement = () => {
-  const [targets, setTargets] = useState([
-    {
-      id: 1,
-      domain: 'example.com',
-      type: 'domain',
-      status: 'active',
-      subdomains: 234,
-      lastScan: '2025-03-15 12:45:00',
-      vulnerabilities: 7,
-      severity: 'high'
-    },
-    {
-      id: 2,
-      domain: 'target.com',
-      type: 'domain',
-      status: 'scanning',
-      subdomains: 127,
-      lastScan: '2025-03-15 14:15:00',
-      vulnerabilities: 3,
-      severity: 'medium'
-    },
-    {
-      id: 3,
-      domain: '192.168.1.0/24',
-      type: 'cidr',
-      status: 'pending',
-      subdomains: 0,
-      lastScan: null,
-      vulnerabilities: 0,
-      severity: 'none'
-    },
-    {
-      id: 4,
-      domain: 'testsite.org',
-      type: 'domain',
-      status: 'completed',
-      subdomains: 89,
-      lastScan: '2025-03-14 09:30:00',
-      vulnerabilities: 12,
-      severity: 'critical'
-    }
-  ]);
-
+  const [targets, setTargets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    total_targets: 0,
+    active_scans: 0,
+    total_subdomains: 0,
+    total_vulnerabilities: 0,
+    by_status: {},
+    by_type: {},
+    by_severity: {}
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTarget, setNewTarget] = useState({
     domain: '',
     type: 'domain',
-    workflow: 'full-recon'
+    workflow: 'full-recon',
+    notes: ''
   });
+
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
+  // Fetch targets and stats
+  const fetchTargets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [targetsResponse, statsResponse] = await Promise.all([
+        fetch(`${backendUrl}/api/targets`),
+        fetch(`${backendUrl}/api/targets/stats`)
+      ]);
+
+      if (!targetsResponse.ok || !statsResponse.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const targetsData = await targetsResponse.json();
+      const statsData = await statsResponse.json();
+
+      setTargets(targetsData);
+      setStats(statsData);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching targets:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTargets();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
