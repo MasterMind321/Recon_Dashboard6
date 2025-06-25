@@ -130,6 +130,18 @@ backend:
         comment: "Created organized folder structure with models/, routes/, services/, data/ folders. Separated concerns properly but kept original server.py for compatibility"
 
 frontend:
+  - task: "Target Management Page - Replace Dummy Data with API Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/TargetManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Completely replaced dummy data with real API integration. Added proper state management with useEffect for data fetching, error handling, loading states. Implemented full CRUD operations: create, read, delete targets, start scans. Added target statistics integration and proper date formatting. Improved UI with empty state, loading state, and error notifications."
+
   - task: "Remove System Status from Dashboard"
     implemented: true
     working: "NA"
