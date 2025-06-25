@@ -154,7 +154,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Scans */}
+      {/* Recent Scans and Tool Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-800 rounded-lg border border-gray-700">
           <div className="p-6 border-b border-gray-700">
@@ -164,80 +164,66 @@ const Dashboard = () => {
             </h2>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {recentScans.map((scan) => (
-                <div key={scan.id} className="bg-gray-700 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <i className={`${getStatusIcon(scan.status)} mr-2 ${getStatusColor(scan.status)}`}></i>
-                      <span className="font-semibold text-white">{scan.target}</span>
+            {recentScans.length > 0 ? (
+              <div className="space-y-4">
+                {recentScans.map((scan) => (
+                  <div key={scan.id} className="bg-gray-700 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <i className={`${getStatusIcon(scan.status)} mr-2 ${getStatusColor(scan.status)}`}></i>
+                        <span className="font-semibold text-white">{scan.target}</span>
+                      </div>
+                      <span className="text-sm text-gray-400">{scan.tool_name}</span>
                     </div>
-                    <span className="text-sm text-gray-400">{scan.progress}%</span>
-                  </div>
-                  
-                  <div className="w-full bg-gray-600 rounded-full h-2 mb-3">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        scan.status === 'completed' ? 'bg-green-400' : 
-                        scan.status === 'running' ? 'bg-yellow-400' : 'bg-red-400'
-                      }`}
-                      style={{width: `${scan.progress}%`}}
-                    ></div>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm text-gray-400">
-                    <div>
-                      <span className="text-cyan-400">{scan.subdomains}</span> subdomains
-                      <span className="mx-2">•</span>
-                      <span className="text-red-400">{scan.vulnerabilities}</span> vulns
+                    
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <div>
+                        <span className="text-cyan-400">{scan.category}</span>
+                        <span className="mx-2">•</span>
+                        <span className="text-green-400">{scan.status}</span>
+                      </div>
+                      <span className="text-yellow-400">
+                        {new Date(scan.start_time).toLocaleString()}
+                      </span>
                     </div>
-                    {scan.currentPhase && (
-                      <span className="text-yellow-400">{scan.currentPhase}</span>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <i className="fas fa-search text-4xl text-gray-600 mb-3"></i>
+                <p className="text-gray-400">No recent scans available</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* System Status */}
+        {/* Tool Categories Overview */}
         <div className="bg-gray-800 rounded-lg border border-gray-700">
           <div className="p-6 border-b border-gray-700">
             <h2 className="text-xl font-semibold text-white flex items-center">
-              <i className="fas fa-server mr-2 text-cyan-400"></i>
-              System Status
+              <i className="fas fa-layer-group mr-2 text-cyan-400"></i>
+              Tool Categories
             </h2>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {[
-                { tool: 'Subfinder', status: 'online', usage: 85 },
-                { tool: 'Amass', status: 'online', usage: 92 },
-                { tool: 'HTTPx', status: 'online', usage: 67 },
-                { tool: 'Nuclei', status: 'online', usage: 74 },
-                { tool: 'Nmap', status: 'busy', usage: 100 },
-                { tool: 'FFUF', status: 'online', usage: 45 }
-              ].map((tool, index) => (
-                <div key={index} className="flex items-center justify-between">
+              {Object.entries(toolStats.categories).map(([category, count]) => (
+                <div key={category} className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full mr-3 ${
-                      tool.status === 'online' ? 'bg-green-400' :
-                      tool.status === 'busy' ? 'bg-yellow-400' : 'bg-red-400'
-                    }`}></div>
-                    <span className="text-white">{tool.tool}</span>
+                    <div className="w-3 h-3 rounded-full mr-3 bg-cyan-400"></div>
+                    <span className="text-white capitalize">
+                      {category.replace(/_/g, ' ')}
+                    </span>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-600 rounded-full h-2 mr-2">
-                      <div 
-                        className="bg-cyan-400 h-2 rounded-full" 
-                        style={{width: `${tool.usage}%`}}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-gray-400 w-10">{tool.usage}%</span>
-                  </div>
+                  <span className="text-cyan-400 font-bold">{count}</span>
                 </div>
               ))}
+              {Object.keys(toolStats.categories).length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-gray-400">Loading tool categories...</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
