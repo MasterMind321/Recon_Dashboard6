@@ -1063,7 +1063,7 @@ def main():
     
     # 3. Create multiple targets with different types
     print("\n--- Creating Test Targets ---")
-    domain_target_success, domain_data = tester.test_create_target(f"domain-{uuid.uuid4().hex[:8]}.example.com", "domain")
+    domain_target_success, domain_data = tester.test_create_target("example.com", "domain")
     ip_target_success, ip_data = tester.test_create_target(f"10.0.0.{random.randint(1, 254)}", "ip")
     cidr_target_success, cidr_data = tester.test_create_target(f"192.168.{random.randint(1, 254)}.0/24", "cidr")
     
@@ -1110,7 +1110,59 @@ def main():
     # 12. Test starting scan with invalid ID
     tester.test_start_scan_invalid_id()
     
-    # 13. Test target stats again (should show our targets)
+    # Test Subdomain Enumeration API
+    print("\n==== Subdomain Enumeration Endpoints ====")
+    
+    # 1. Test getting tools status
+    print("\n--- Subdomain Enumeration Tools Status ---")
+    tester.test_get_tools_status()
+    
+    # 2. Test installing tools
+    print("\n--- Installing Subdomain Enumeration Tools ---")
+    tester.test_install_tools()
+    
+    # 3. Test getting tools status again (should show installation in progress)
+    print("\n--- Updated Tools Status ---")
+    tester.test_get_tools_status()
+    
+    # 4. Test starting subdomain enumeration
+    print("\n--- Starting Subdomain Enumeration ---")
+    if domain_target_id:
+        # Test with specific tools (crt.sh and dnsgen should be working)
+        tester.test_start_subdomain_enumeration(domain_target_id, ["crtsh", "dnsgen"])
+    
+    # 5. Test starting subdomain enumeration with invalid target
+    tester.test_start_subdomain_enumeration_invalid_target()
+    
+    # 6. Test getting enumeration job
+    print("\n--- Getting Enumeration Job ---")
+    if tester.enumeration_job_id:
+        tester.test_get_enumeration_job(tester.enumeration_job_id)
+    
+    # 7. Test getting enumeration job with invalid ID
+    tester.test_get_enumeration_job_invalid_id()
+    
+    # 8. Test getting enumeration jobs for target
+    print("\n--- Getting Enumeration Jobs for Target ---")
+    if domain_target_id:
+        tester.test_get_target_enumeration_jobs(domain_target_id)
+    
+    # 9. Test getting enumeration jobs for invalid target
+    tester.test_get_target_enumeration_jobs_invalid_target()
+    
+    # 10. Test getting subdomains for target
+    print("\n--- Getting Subdomains for Target ---")
+    if domain_target_id:
+        tester.test_get_target_subdomains(domain_target_id)
+    
+    # 11. Test getting subdomains for invalid target
+    tester.test_get_target_subdomains_invalid_target()
+    
+    # 12. Test getting enumeration statistics
+    print("\n--- Getting Enumeration Statistics ---")
+    tester.test_get_enumeration_stats()
+    
+    # 13. Test target stats again (should show our targets with updated subdomain counts)
     print("\n--- Updated Target Stats ---")
     tester.test_get_target_stats()
     
