@@ -6,9 +6,10 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime
+from enum import Enum
 
 
 ROOT_DIR = Path(__file__).parent
@@ -26,6 +27,32 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 
+# Define Enums
+class ToolCategory(str, Enum):
+    SUBDOMAIN_ENUMERATION = "subdomain_enumeration"
+    LIVENESS_FINGERPRINTING = "liveness_fingerprinting"
+    JAVASCRIPT_ENDPOINT = "javascript_endpoint"
+    VULNERABILITY_SCANNING = "vulnerability_scanning"
+    HISTORICAL_DATA = "historical_data"
+    DIRECTORY_FUZZING = "directory_fuzzing"
+    PORT_SCANNING = "port_scanning"
+    CLOUD_RECON = "cloud_recon"
+    REPORTING_NOTIFICATION = "reporting_notification"
+    UTILITY_MISC = "utility_misc"
+
+class InstallationStatus(str, Enum):
+    NOT_INSTALLED = "not_installed"
+    INSTALLED = "installed"
+    UPDATING = "updating"
+    FAILED = "failed"
+    OUTDATED = "outdated"
+
+class ToolStatus(str, Enum):
+    ONLINE = "online"
+    OFFLINE = "offline"
+    BUSY = "busy"
+    ERROR = "error"
+
 # Define Models
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -34,6 +61,48 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+class ToolConfig(BaseModel):
+    name: str
+    value: Any
+    description: Optional[str] = None
+
+class ReconTool(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: ToolCategory
+    description: str
+    install_command: str
+    usage_description: str
+    installation_status: InstallationStatus = InstallationStatus.NOT_INSTALLED
+    tool_status: ToolStatus = ToolStatus.OFFLINE
+    version: Optional[str] = None
+    last_updated: Optional[datetime] = None
+    cpu_usage: float = 0.0
+    memory_usage: float = 0.0
+    configuration: List[ToolConfig] = []
+    icon_color: str = "#06b6d4"  # Default cyan
+    category_color: str = "#3b82f6"  # Default blue
+
+class ToolUpdate(BaseModel):
+    installation_status: Optional[InstallationStatus] = None
+    tool_status: Optional[ToolStatus] = None
+    version: Optional[str] = None
+    cpu_usage: Optional[float] = None
+    memory_usage: Optional[float] = None
+    configuration: Optional[List[ToolConfig]] = None
+
+class ScanResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    target: str
+    tool_name: str
+    category: ToolCategory
+    status: str
+    results: Dict[str, Any]
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    duration_seconds: Optional[int] = None
+    output_file: Optional[str] = None
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
