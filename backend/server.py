@@ -11,6 +11,9 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
+# Import subdomain routes
+from .routes.subdomain_routes import router as subdomain_router
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
