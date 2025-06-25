@@ -554,9 +554,6 @@ api_router.include_router(javascript_router)
 # Include vulnerability routes
 api_router.include_router(vulnerability_router)
 
-# Include vulnerability routes
-api_router.include_router(vulnerability_router)
-
 # Include the router in the main app
 app.include_router(api_router)
 
