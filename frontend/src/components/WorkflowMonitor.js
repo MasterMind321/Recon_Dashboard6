@@ -203,7 +203,9 @@ const WorkflowMonitor = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">Total Tools</p>
-              <p className="text-2xl font-bold text-white">12</p>
+              <p className="text-2xl font-bold text-white">
+                {Object.values(toolStats.categories).reduce((sum, count) => sum + count, 0)}
+              </p>
             </div>
             <i className="fas fa-tools text-2xl text-cyan-400"></i>
           </div>
@@ -212,18 +214,18 @@ const WorkflowMonitor = () => {
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Avg. Completion</p>
-              <p className="text-2xl font-bold text-green-400">8.5h</p>
+              <p className="text-gray-400 text-sm">Installed Tools</p>
+              <p className="text-2xl font-bold text-green-400">{toolStats.installation.installed}</p>
             </div>
-            <i className="fas fa-clock text-2xl text-green-400"></i>
+            <i className="fas fa-download text-2xl text-green-400"></i>
           </div>
         </div>
         
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Success Rate</p>
-              <p className="text-2xl font-bold text-blue-400">94%</p>
+              <p className="text-gray-400 text-sm">Online Tools</p>
+              <p className="text-2xl font-bold text-blue-400">{toolStats.status.online}</p>
             </div>
             <i className="fas fa-check-circle text-2xl text-blue-400"></i>
           </div>
@@ -232,10 +234,10 @@ const WorkflowMonitor = () => {
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Queue Length</p>
-              <p className="text-2xl font-bold text-yellow-400">7</p>
+              <p className="text-gray-400 text-sm">Active Workflows</p>
+              <p className="text-2xl font-bold text-yellow-400">{activeWorkflows.length}</p>
             </div>
-            <i className="fas fa-list text-2xl text-yellow-400"></i>
+            <i className="fas fa-play text-2xl text-yellow-400"></i>
           </div>
         </div>
       </div>
