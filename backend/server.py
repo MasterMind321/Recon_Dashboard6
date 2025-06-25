@@ -20,6 +20,9 @@ from .routes.liveness_routes import router as liveness_router
 # Import JavaScript routes
 from .routes.javascript_routes import router as javascript_router
 
+# Import vulnerability routes
+from .routes.vulnerability_routes import router as vulnerability_router
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
