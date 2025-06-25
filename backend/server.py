@@ -530,43 +530,6 @@ async def start_scan(target_id: str):
     updated_target.pop("_id", None)
     return Target(**updated_target)
 
-@api_router.get("/targets/stats", response_model=TargetStats)
-async def get_target_stats():
-    """Get target statistics"""
-    # Get all targets
-    targets = await db.targets.find().to_list(1000)
-    
-    # Calculate statistics
-    total_targets = len(targets)
-    active_scans = len([t for t in targets if t.get("status") == "scanning"])
-    total_subdomains = sum(t.get("subdomains", 0) for t in targets)
-    total_vulnerabilities = sum(t.get("vulnerabilities", 0) for t in targets)
-    
-    # Group by status
-    by_status = {}
-    for status in TargetStatus:
-        by_status[status.value] = len([t for t in targets if t.get("status") == status.value])
-    
-    # Group by type
-    by_type = {}
-    for target_type in TargetType:
-        by_type[target_type.value] = len([t for t in targets if t.get("type") == target_type.value])
-    
-    # Group by severity
-    by_severity = {}
-    for severity in ScanSeverity:
-        by_severity[severity.value] = len([t for t in targets if t.get("severity") == severity.value])
-    
-    return TargetStats(
-        total_targets=total_targets,
-        active_scans=active_scans,
-        total_subdomains=total_subdomains,
-        total_vulnerabilities=total_vulnerabilities,
-        by_status=by_status,
-        by_type=by_type,
-        by_severity=by_severity
-    )
-
 # Include the router in the main app
 app.include_router(api_router)
 
