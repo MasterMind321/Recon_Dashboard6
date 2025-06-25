@@ -545,6 +545,9 @@ api_router.include_router(subdomain_router)
 # Include liveness routes
 api_router.include_router(liveness_router)
 
+# Include JavaScript routes
+api_router.include_router(javascript_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
