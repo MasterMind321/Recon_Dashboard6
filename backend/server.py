@@ -303,6 +303,233 @@ async def create_scan_result(scan_result: ScanResult):
     await db.scan_results.insert_one(scan_result.dict())
     return scan_result
 
+# Target Management Models
+class TargetType(str, Enum):
+    DOMAIN = "domain"
+    IP = "ip" 
+    CIDR = "cidr"
+
+class TargetStatus(str, Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    SCANNING = "scanning"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class ScanSeverity(str, Enum):
+    NONE = "none"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+class Target(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    domain: str
+    type: TargetType
+    status: TargetStatus = TargetStatus.PENDING
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    last_scan: Optional[datetime] = None
+    subdomains: int = 0
+    vulnerabilities: int = 0
+    severity: ScanSeverity = ScanSeverity.NONE
+    workflow: Optional[str] = "full-recon"
+    notes: Optional[str] = None
+
+class CreateTargetRequest(BaseModel):
+    domain: str
+    type: TargetType
+    workflow: Optional[str] = "full-recon"
+    notes: Optional[str] = None
+
+class UpdateTargetRequest(BaseModel):
+    domain: Optional[str] = None
+    type: Optional[TargetType] = None
+    status: Optional[TargetStatus] = None
+    workflow: Optional[str] = None
+    notes: Optional[str] = None
+
+class TargetStats(BaseModel):
+    total_targets: int
+    active_scans: int
+    total_subdomains: int
+    total_vulnerabilities: int
+    by_status: dict
+    by_type: dict
+    by_severity: dict
+
+# Target Management Routes
+@api_router.get("/targets", response_model=List[Target])
+async def get_targets(
+    status: Optional[TargetStatus] = None,
+    type: Optional[TargetType] = None
+):
+    """Get all targets with optional filtering"""
+    filter_query = {}
+    
+    if status:
+        filter_query["status"] = status
+    if type:
+        filter_query["type"] = type
+        
+    targets = await db.targets.find(filter_query).to_list(1000)
+    
+    # Convert MongoDB documents to Target models
+    result = []
+    for target in targets:
+        # Remove MongoDB _id from the response
+        target.pop("_id", None)
+        result.append(Target(**target))
+        
+    return result
+
+@api_router.post("/targets", response_model=Target)
+async def create_target(target_request: CreateTargetRequest):
+    """Create a new target"""
+    # Check if target already exists
+    existing = await db.targets.find_one({"domain": target_request.domain})
+    if existing:
+        raise HTTPException(status_code=400, detail="Target already exists")
+    
+    # Create new target
+    target = Target(
+        domain=target_request.domain,
+        type=target_request.type,
+        workflow=target_request.workflow,
+        notes=target_request.notes
+    )
+    
+    # Insert into database
+    target_dict = target.dict()
+    await db.targets.insert_one(target_dict)
+    
+    return target
+
+@api_router.get("/targets/{target_id}", response_model=Target)
+async def get_target(target_id: str):
+    """Get a specific target by ID"""
+    target = await db.targets.find_one({"id": target_id})
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+        
+    # Remove MongoDB _id from the response
+    target.pop("_id", None)
+    return Target(**target)
+
+@api_router.put("/targets/{target_id}", response_model=Target)
+async def update_target(target_id: str, update_request: UpdateTargetRequest):
+    """Update a target"""
+    # Find existing target
+    existing = await db.targets.find_one({"id": target_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Target not found")
+    
+    # Prepare update data
+    update_data = {}
+    if update_request.domain is not None:
+        update_data["domain"] = update_request.domain
+    if update_request.type is not None:
+        update_data["type"] = update_request.type
+    if update_request.status is not None:
+        update_data["status"] = update_request.status
+    if update_request.workflow is not None:
+        update_data["workflow"] = update_request.workflow
+    if update_request.notes is not None:
+        update_data["notes"] = update_request.notes
+        
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Update in database
+    await db.targets.update_one({"id": target_id}, {"$set": update_data})
+    
+    # Fetch and return updated target
+    updated_target = await db.targets.find_one({"id": target_id})
+    updated_target.pop("_id", None)
+    return Target(**updated_target)
+
+@api_router.delete("/targets/{target_id}")
+async def delete_target(target_id: str):
+    """Delete a target"""
+    # Check if target exists
+    existing = await db.targets.find_one({"id": target_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Target not found")
+    
+    # Delete the target
+    result = await db.targets.delete_one({"id": target_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Target not found")
+        
+    # Also delete related scan results
+    await db.scan_results.delete_many({"target": existing["domain"]})
+    
+    return {"message": "Target deleted successfully"}
+
+@api_router.post("/targets/{target_id}/scan")
+async def start_scan(target_id: str):
+    """Start a scan for the target"""
+    # Find the target
+    target = await db.targets.find_one({"id": target_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    
+    # Update target status to scanning
+    await db.targets.update_one(
+        {"id": target_id}, 
+        {
+            "$set": {
+                "status": TargetStatus.SCANNING,
+                "last_scan": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Fetch and return updated target
+    updated_target = await db.targets.find_one({"id": target_id})
+    updated_target.pop("_id", None)
+    return Target(**updated_target)
+
+@api_router.get("/targets/stats", response_model=TargetStats)
+async def get_target_stats():
+    """Get target statistics"""
+    # Get all targets
+    targets = await db.targets.find().to_list(1000)
+    
+    # Calculate statistics
+    total_targets = len(targets)
+    active_scans = len([t for t in targets if t.get("status") == "scanning"])
+    total_subdomains = sum(t.get("subdomains", 0) for t in targets)
+    total_vulnerabilities = sum(t.get("vulnerabilities", 0) for t in targets)
+    
+    # Group by status
+    by_status = {}
+    for status in TargetStatus:
+        by_status[status.value] = len([t for t in targets if t.get("status") == status.value])
+    
+    # Group by type
+    by_type = {}
+    for target_type in TargetType:
+        by_type[target_type.value] = len([t for t in targets if t.get("type") == target_type.value])
+    
+    # Group by severity
+    by_severity = {}
+    for severity in ScanSeverity:
+        by_severity[severity.value] = len([t for t in targets if t.get("severity") == severity.value])
+    
+    return TargetStats(
+        total_targets=total_targets,
+        active_scans=active_scans,
+        total_subdomains=total_subdomains,
+        total_vulnerabilities=total_vulnerabilities,
+        by_status=by_status,
+        by_type=by_type,
+        by_severity=by_severity
+    )
+
 # Include the router in the main app
 app.include_router(api_router)
 
