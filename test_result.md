@@ -137,11 +137,11 @@ backend:
 
   - task: "Liveness, Fingerprinting & Screenshots Implementation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes/liveness_routes.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -149,6 +149,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Completed implementation of comprehensive liveness, fingerprinting, and screenshots functionality. Created models/liveness_models.py with 8 tools enum, services/liveness_service.py with tool installation and execution functions, routes/liveness_routes.py with 8 API endpoints. Added support for httpx (liveness + CDN/WAF detection), tlsx (TLS certificates), gowitness (screenshots), wafw00f (WAF detection), whatweb (tech stack), wappalyzer, and CMSeeK. Integrated into server.py and added wafw00f to requirements.txt. Backend restarted successfully."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing of all Liveness, Fingerprinting & Screenshots API endpoints completed. All endpoints are working correctly. Successfully tested GET /api/liveness-tools/status to check installed tools, POST /api/liveness-tools/install to initiate tool installation, POST /api/targets/{target_id}/check-liveness to start liveness checks with specific tools, GET /api/liveness-jobs/{job_id} to retrieve job details, GET /api/targets/{target_id}/liveness-jobs to get liveness history, GET /api/targets/{target_id}/liveness-results to retrieve liveness results, and GET /api/liveness/stats for overall statistics. Background task execution is working properly. The API correctly handles error cases like invalid target IDs. The system properly requires existing subdomains from enumeration before running liveness checks. Screenshots are stored as base64 encoded strings as expected."
 
   - task: "Backend Folder Structure Reorganization"
     implemented: true
